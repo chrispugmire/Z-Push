@@ -102,6 +102,7 @@ include_once(ZPUSH_CONFIG);
             ZLog::Write(LOGLEVEL_INFO, sprintf("Announcing latest AS version to device: %s", $versions));
             header("X-MS-RP: ". $versions);
         }
+        ZLog::Write(LOGLEVEL_INFO, sprintf("Request has come in..."));
 
         RequestProcessor::Initialize();
         RequestProcessor::HandleRequest();
@@ -116,6 +117,8 @@ include_once(ZPUSH_CONFIG);
         $len = ob_get_length();
         $data = ob_get_contents();
         ob_end_clean();
+
+        ZLog::Write(LOGLEVEL_INFO, sprintf("Streaming data to server size=%d", $len);
 
         // log amount of data transferred
         // TODO check $len when streaming more data (e.g. Attachments), as the data will be send chunked
