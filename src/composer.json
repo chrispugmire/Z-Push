@@ -3,5 +3,8 @@
         "classmap": ["autodiscover/", "backend/", "include/", "lib/"],
         "files": ["version.php", "lib/core/zpushdefs.php", "lib/utils/compat.php"]
     }
+    ,"require": {
+	    "webklex/php-imap": "^4.1"
+	}
 
 }
