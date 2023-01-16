@@ -1047,7 +1047,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
         // Chrisp efficient overview alternative.
         //$overviews = @imap_fetch_overview($this->mbox, $sequence);
         if (is_null($myclient)) $myclient = myover_open(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,IMAP_OPTIONS);
-        $overviews = myoverview($folderid,$sequence);
+        $overviews = myoverview($myclient,$folderid,$sequence);
 
         if (!is_array($overviews) || count($overviews) == 0) {
             $error = imap_last_error();
