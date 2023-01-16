@@ -6,6 +6,6 @@
 	"license": "AGPL-3.0",
 	"require": {
 		"php": ">=5.4.0"
-	        "webklex/php-imap": "^4.1"
+	        ,"webklex/php-imap": "^4.1"
 	}
 }
