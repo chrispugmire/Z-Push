@@ -1555,7 +1555,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
 
                 unset($message);
                 unset($mail);
-                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s') size=%d", $folderid,  $id, strlen($output));
+                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s') size=%d", $folderid,  $id, strlen($output)));
 
                 return $output;
             }
