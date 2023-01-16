@@ -1135,428 +1135,436 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
      * @return object/false     false if the message could not be retrieved
      */
     public function GetMessage($folderid, $id, $contentparameters) {
-        $truncsize = Utils::GetTruncSize($contentparameters->GetTruncation());
-        $mimesupport = $contentparameters->GetMimeSupport();
-        $bodypreference = $contentparameters->GetBodyPreference(); /* fmbiete's contribution r1528, ZP-320 */
-        ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')", $folderid,  $id, implode(",", $bodypreference)));
+        try {
+            $truncsize = Utils::GetTruncSize($contentparameters->GetTruncation());
+            $mimesupport = $contentparameters->GetMimeSupport();
+            $bodypreference = $contentparameters->GetBodyPreference(); /* fmbiete's contribution r1528, ZP-320 */
+            ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')", $folderid,  $id, implode(",", $bodypreference)));
 
-        $folderImapid = $this->getImapIdFromFolderId($folderid);
+            $folderImapid = $this->getImapIdFromFolderId($folderid);
 
-        $is_sent_folder = strcasecmp($folderImapid, $this->create_name_folder(IMAP_FOLDER_SENT)) == 0;
+            $is_sent_folder = strcasecmp($folderImapid, $this->create_name_folder(IMAP_FOLDER_SENT)) == 0;
 
-        // Get flags, etc
-        $stat = $this->StatMessage($folderid, $id);
+            // Get flags, etc
+            $stat = $this->StatMessage($folderid, $id);
 
-        if ($stat) {
-            $this->imap_reopen_folder($folderImapid);
-            $mail_headers = @imap_fetchheader($this->mbox, $id, FT_UID);
-            $mail =  $mail_headers . @imap_body($this->mbox, $id, FT_PEEK | FT_UID);
+            if ($stat) {
+                $this->imap_reopen_folder($folderImapid);
+                $mail_headers = @imap_fetchheader($this->mbox, $id, FT_UID);
+                $mail =  $mail_headers . @imap_body($this->mbox, $id, FT_PEEK | FT_UID);
 
-            if (empty($mail)) {
-                throw new StatusException(sprintf("BackendIMAP->GetMessage(): Error, message not found, maybe was moved"), SYNC_ITEMOPERATIONSSTATUS_INVALIDATT);
-            }
-
-            $mobj = new Mail_mimeDecode($mail);
-            $message = $mobj->decode(array('decode_headers' => 'utf-8', 'decode_bodies' => true, 'include_bodies' => true, 'rfc_822bodies' => true, 'charset' => 'utf-8'));
-            unset($mobj);
-
-            Utils::CheckAndFixEncodingInHeaders($mail, $message);
-
-            $is_multipart = is_multipart($message);
-            $is_smime = is_smime($message);
-            $is_encrypted = $is_smime ? is_encrypted($message) : false;
-            ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): Message is multipart: %d, smime: %d, smime encrypted: %d", $is_multipart, $is_smime, $is_encrypted));
-
-            //Select body type preference
-            $bpReturnType = SYNC_BODYPREFERENCE_PLAIN;
-            if ($bodypreference !== false) {
-                $bpReturnType = Utils::GetBodyPreferenceBestMatch($bodypreference); // changed by mku ZP-330
-            }
-            ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): getBodyPreferenceBestMatch: %d", $bpReturnType));
-
-            // Detect Apple iOS devices
-            $isAppleIosDevice = false;
-            $deviceType = strtolower(Request::GetDeviceType());
-            if ($deviceType == 'iphone' || $deviceType == 'ipad' || $deviceType == 'ipod') {
-                ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage():: iOS device %s->%s detected", Request::GetDeviceType(), Request::GetUserAgent()));
-                $isAppleIosDevice = true;
-            }
-          
-            // Prefered format is MIME -OR- message is SMIME -OR- the device supports MIME (iPhone) and doesn't really understand HTML
-            if ($bpReturnType == SYNC_BODYPREFERENCE_MIME || ($bpReturnType == SYNC_BODYPREFERENCE_HTML && $isAppleIosDevice) || $is_smime || in_array(SYNC_BODYPREFERENCE_MIME, $bodypreference)) {
-                $bpReturnType = SYNC_BODYPREFERENCE_MIME;
-            }
-
-            // We need the text body even though MIME is used, for the preview
-            $textBody = "";
-            Mail_mimeDecode::getBodyRecursive($message, "html", $textBody, true);
-            if (strlen($textBody) > 0) {
-                if ($bpReturnType != SYNC_BODYPREFERENCE_MIME) {
-                    $bpReturnType = SYNC_BODYPREFERENCE_HTML;
+                if (empty($mail)) {
+                    throw new StatusException(sprintf("BackendIMAP->GetMessage(): Error, message not found, maybe was moved"), SYNC_ITEMOPERATIONSSTATUS_INVALIDATT);
                 }
-            }
-            else {
-                Mail_mimeDecode::getBodyRecursive($message, "plain", $textBody, true);
-                if ($bpReturnType != SYNC_BODYPREFERENCE_MIME) {
-                    $bpReturnType = SYNC_BODYPREFERENCE_PLAIN;
+
+                $mobj = new Mail_mimeDecode($mail);
+                $message = $mobj->decode(array('decode_headers' => 'utf-8', 'decode_bodies' => true, 'include_bodies' => true, 'rfc_822bodies' => true, 'charset' => 'utf-8'));
+                unset($mobj);
+
+                Utils::CheckAndFixEncodingInHeaders($mail, $message);
+
+                $is_multipart = is_multipart($message);
+                $is_smime = is_smime($message);
+                $is_encrypted = $is_smime ? is_encrypted($message) : false;
+                ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): Message is multipart: %d, smime: %d, smime encrypted: %d", $is_multipart, $is_smime, $is_encrypted));
+
+                //Select body type preference
+                $bpReturnType = SYNC_BODYPREFERENCE_PLAIN;
+                if ($bodypreference !== false) {
+                    $bpReturnType = Utils::GetBodyPreferenceBestMatch($bodypreference); // changed by mku ZP-330
                 }
-            }
+                ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): getBodyPreferenceBestMatch: %d", $bpReturnType));
 
-            ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): after thinking a bit we will use: %d", $bpReturnType));
+                // Detect Apple iOS devices
+                $isAppleIosDevice = false;
+                $deviceType = strtolower(Request::GetDeviceType());
+                if ($deviceType == 'iphone' || $deviceType == 'ipad' || $deviceType == 'ipod') {
+                    ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage():: iOS device %s->%s detected", Request::GetDeviceType(), Request::GetUserAgent()));
+                    $isAppleIosDevice = true;
+                }
+            
+                // Prefered format is MIME -OR- message is SMIME -OR- the device supports MIME (iPhone) and doesn't really understand HTML
+                if ($bpReturnType == SYNC_BODYPREFERENCE_MIME || ($bpReturnType == SYNC_BODYPREFERENCE_HTML && $isAppleIosDevice) || $is_smime || in_array(SYNC_BODYPREFERENCE_MIME, $bodypreference)) {
+                    $bpReturnType = SYNC_BODYPREFERENCE_MIME;
+                }
+
+                // We need the text body even though MIME is used, for the preview
+                $textBody = "";
+                Mail_mimeDecode::getBodyRecursive($message, "html", $textBody, true);
+                if (strlen($textBody) > 0) {
+                    if ($bpReturnType != SYNC_BODYPREFERENCE_MIME) {
+                        $bpReturnType = SYNC_BODYPREFERENCE_HTML;
+                    }
+                }
+                else {
+                    Mail_mimeDecode::getBodyRecursive($message, "plain", $textBody, true);
+                    if ($bpReturnType != SYNC_BODYPREFERENCE_MIME) {
+                        $bpReturnType = SYNC_BODYPREFERENCE_PLAIN;
+                    }
+                }
+
+                ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): after thinking a bit we will use: %d", $bpReturnType));
 
 
-            $output = new SyncMail();
+                $output = new SyncMail();
 
-            if (Request::GetProtocolVersion() >= 12.0) {
-                $output->asbody = new SyncBaseBody();
+                if (Request::GetProtocolVersion() >= 12.0) {
+                    $output->asbody = new SyncBaseBody();
 
-                Utils::CheckAndFixEncoding($textBody);
+                    Utils::CheckAndFixEncoding($textBody);
 
-                $data = "";
-                switch($bpReturnType) {
-                    case SYNC_BODYPREFERENCE_PLAIN:
-                        $data = $textBody;
-                        break;
-                    case SYNC_BODYPREFERENCE_HTML:
-                        $data = $textBody;
-                        break;
-                    case SYNC_BODYPREFERENCE_MIME:
-                        if ($is_smime) {
-                            if ($is_encrypted) {
-                                // #190, KD 2015-06-04 - If message body is encrypted only send the headers, as data should only be in the attachment
-                                $data = $mail_headers;
+                    $data = "";
+                    switch($bpReturnType) {
+                        case SYNC_BODYPREFERENCE_PLAIN:
+                            $data = $textBody;
+                            break;
+                        case SYNC_BODYPREFERENCE_HTML:
+                            $data = $textBody;
+                            break;
+                        case SYNC_BODYPREFERENCE_MIME:
+                            if ($is_smime) {
+                                if ($is_encrypted) {
+                                    // #190, KD 2015-06-04 - If message body is encrypted only send the headers, as data should only be in the attachment
+                                    $data = $mail_headers;
+                                }
+                                else {
+                                    $data = $mail;
+                                }
                             }
                             else {
-                                $data = $mail;
+                                $data = build_mime_message($message);
                             }
+                            break;
+                        case SYNC_BODYPREFERENCE_RTF:
+                            ZLog::Write(LOGLEVEL_DEBUG, "BackendIMAP->GetMessage RTF Format NOT SUPPORTED");
+                            // TODO: this is broken. This is no RTF.
+                            $data = base64_encode($textBody);
+                            break;
+                    }
+
+                    // truncate body, if requested.
+                    // MIME should not be truncated, but encrypted messages are truncated always to the headers size
+                    if ($bpReturnType == SYNC_BODYPREFERENCE_MIME) {
+                        if ($is_encrypted) {
+                            $output->asbody->truncated = 1;
                         }
                         else {
-                            $data = build_mime_message($message);
+                            $output->asbody->truncated = 0;
                         }
-                        break;
-                    case SYNC_BODYPREFERENCE_RTF:
-                        ZLog::Write(LOGLEVEL_DEBUG, "BackendIMAP->GetMessage RTF Format NOT SUPPORTED");
-                        // TODO: this is broken. This is no RTF.
-                        $data = base64_encode($textBody);
-                        break;
+                    }
+                    else {
+                        if (strlen($data) > $truncsize) {
+                            $data = Utils::Utf8_truncate($data, $truncsize);
+                            $output->asbody->truncated = 1;
+                        }
+                        else {
+                            $output->asbody->truncated = 0;
+                        }
+                    }
+
+                    // indicate in open that the data is HTML so it can be truncated correctly if required
+                    $output->asbody->data = StringStreamWrapper::Open($data, ($bpReturnType == SYNC_BODYPREFERENCE_HTML));
+                    $output->asbody->estimatedDataSize = strlen($data);
+                    unset($data);
+                    $output->asbody->type = $bpReturnType;
+                    if ($bpReturnType == SYNC_BODYPREFERENCE_MIME) {
+                        // NativeBodyType can be only (1 => PLAIN, 2 => HTML, 3 => RTF). MIME uses 1
+                        $output->nativebodytype = SYNC_BODYPREFERENCE_PLAIN;
+                    }
+                    else {
+                        $output->nativebodytype = $bpReturnType;
+                    }
+
+                    $bpo = $contentparameters->BodyPreference($output->asbody->type);
+                    if (Request::GetProtocolVersion() >= 14.0 && $bpo->GetPreview()) {
+                        // Preview must be always plaintext
+                        $previewText = "";
+                        Mail_mimeDecode::getBodyRecursive($message, "plain", $previewText, true);
+                        if (strlen($previewText) == 0) {
+                            Mail_mimeDecode::getBodyRecursive($message, "html", $previewText, true);
+                            $previewText = Utils::ConvertHtmlToText($previewText);
+                        }
+                        $output->asbody->preview = Utils::Utf8_truncate($previewText, $bpo->GetPreview());
+                    }
+                }
+                /* END fmbiete's contribution r1528, ZP-320 */
+                else { // ASV_2.5
+                    //DEPRECATED : very old devices, and incomplete code
+
+                    $output->bodytruncated = 0;
+                    $data = "";
+                    if ($bpReturnType == SYNC_BODYPREFERENCE_MIME) {
+                    $data = $mail;
+                    }
+                    else {
+                    $data = $textBody;
+                    }
+
+                    $output->mimesize = strlen($data);
+                    if (strlen($data) > $truncsize && $bpReturnType != SYNC_BODYPREFERENCE_MIME) {
+                        $output->mimedata = StringStreamWrapper::Open(Utils::Utf8_truncate($data, $truncsize));
+                        $output->mimetruncated = 1;
+                    }
+                    else {
+                        $output->mimetruncated = 0;
+                        $output->mimedata = StringStreamWrapper::Open($data);
+                    }
+                    unset($data);
                 }
 
-                // truncate body, if requested.
-                // MIME should not be truncated, but encrypted messages are truncated always to the headers size
-                if ($bpReturnType == SYNC_BODYPREFERENCE_MIME) {
+                unset($textBody);
+                unset($mail_headers);
+
+                $output->datereceived = isset($message->headers["date"]) ? $this->cleanupDate($message->headers["date"]) : null;
+
+                if ($is_smime) {
+                    // #190, KD 2015-06-04 - Add Encrypted (and possibly signed) to the classifications emitted
                     if ($is_encrypted) {
-                        $output->asbody->truncated = 1;
+                        $output->messageclass = "IPM.Note.SMIME";
                     }
                     else {
-                        $output->asbody->truncated = 0;
+                        $output->messageclass = "IPM.Note.SMIME.MultipartSigned";
                     }
                 }
                 else {
-                    if (strlen($data) > $truncsize) {
-                        $data = Utils::Utf8_truncate($data, $truncsize);
-                        $output->asbody->truncated = 1;
+                    $output->messageclass = "IPM.Note";
+                }
+                $output->subject = isset($message->headers["subject"]) ? $message->headers["subject"] : "";
+                $output->read = $stat["flags"];
+                $output->from = isset($message->headers["from"]) ? $message->headers["from"] : null;
+
+                if (isset($message->headers["thread-topic"])) {
+                    $output->threadtopic = $message->headers["thread-topic"];
+                }
+                else {
+                    $output->threadtopic = $output->subject;
+                }
+
+                // Language Code Page ID: http://msdn.microsoft.com/en-us/library/windows/desktop/dd317756%28v=vs.85%29.aspx
+                $output->internetcpid = INTERNET_CPID_UTF8;
+                if (Request::GetProtocolVersion() >= 12.0) {
+                    $output->contentclass = DEFAULT_EMAIL_CONTENTCLASS;
+
+                    $output->flag = new SyncMailFlags();
+                    if (isset($stat["star"]) && $stat["star"]) {
+                        //flagstatus 0: clear, 1: complete, 2: active
+                        $output->flag->flagstatus = SYNC_FLAGSTATUS_ACTIVE;
+                        //flagtype: for follow up
+                        $output->flag->flagtype = "FollowUp";
                     }
                     else {
-                        $output->asbody->truncated = 0;
+                        $output->flag->flagstatus = SYNC_FLAGSTATUS_CLEAR;
                     }
-                }
 
-                // indicate in open that the data is HTML so it can be truncated correctly if required
-                $output->asbody->data = StringStreamWrapper::Open($data, ($bpReturnType == SYNC_BODYPREFERENCE_HTML));
-                $output->asbody->estimatedDataSize = strlen($data);
-                unset($data);
-                $output->asbody->type = $bpReturnType;
-                if ($bpReturnType == SYNC_BODYPREFERENCE_MIME) {
-                    // NativeBodyType can be only (1 => PLAIN, 2 => HTML, 3 => RTF). MIME uses 1
-                    $output->nativebodytype = SYNC_BODYPREFERENCE_PLAIN;
-                }
-                else {
-                    $output->nativebodytype = $bpReturnType;
-                }
+                    if (Request::GetProtocolVersion() >= 14.0) {
 
-                $bpo = $contentparameters->BodyPreference($output->asbody->type);
-                if (Request::GetProtocolVersion() >= 14.0 && $bpo->GetPreview()) {
-                    // Preview must be always plaintext
-                    $previewText = "";
-                    Mail_mimeDecode::getBodyRecursive($message, "plain", $previewText, true);
-                    if (strlen($previewText) == 0) {
-                        Mail_mimeDecode::getBodyRecursive($message, "html", $previewText, true);
-                        $previewText = Utils::ConvertHtmlToText($previewText);
-                    }
-                    $output->asbody->preview = Utils::Utf8_truncate($previewText, $bpo->GetPreview());
-                }
-            }
-            /* END fmbiete's contribution r1528, ZP-320 */
-            else { // ASV_2.5
-                //DEPRECATED : very old devices, and incomplete code
-
-                $output->bodytruncated = 0;
-                $data = "";
-                if ($bpReturnType == SYNC_BODYPREFERENCE_MIME) {
-                   $data = $mail;
-                }
-                else {
-                   $data = $textBody;
-                }
-
-                $output->mimesize = strlen($data);
-                if (strlen($data) > $truncsize && $bpReturnType != SYNC_BODYPREFERENCE_MIME) {
-                    $output->mimedata = StringStreamWrapper::Open(Utils::Utf8_truncate($data, $truncsize));
-                    $output->mimetruncated = 1;
-                }
-                else {
-                    $output->mimetruncated = 0;
-                    $output->mimedata = StringStreamWrapper::Open($data);
-                }
-                unset($data);
-            }
-
-            unset($textBody);
-            unset($mail_headers);
-
-            $output->datereceived = isset($message->headers["date"]) ? $this->cleanupDate($message->headers["date"]) : null;
-
-            if ($is_smime) {
-                // #190, KD 2015-06-04 - Add Encrypted (and possibly signed) to the classifications emitted
-                if ($is_encrypted) {
-                    $output->messageclass = "IPM.Note.SMIME";
-                }
-                else {
-                    $output->messageclass = "IPM.Note.SMIME.MultipartSigned";
-                }
-            }
-            else {
-                $output->messageclass = "IPM.Note";
-            }
-            $output->subject = isset($message->headers["subject"]) ? $message->headers["subject"] : "";
-            $output->read = $stat["flags"];
-            $output->from = isset($message->headers["from"]) ? $message->headers["from"] : null;
-
-            if (isset($message->headers["thread-topic"])) {
-                $output->threadtopic = $message->headers["thread-topic"];
-            }
-            else {
-                $output->threadtopic = $output->subject;
-            }
-
-            // Language Code Page ID: http://msdn.microsoft.com/en-us/library/windows/desktop/dd317756%28v=vs.85%29.aspx
-            $output->internetcpid = INTERNET_CPID_UTF8;
-            if (Request::GetProtocolVersion() >= 12.0) {
-                $output->contentclass = DEFAULT_EMAIL_CONTENTCLASS;
-
-                $output->flag = new SyncMailFlags();
-                if (isset($stat["star"]) && $stat["star"]) {
-                    //flagstatus 0: clear, 1: complete, 2: active
-                    $output->flag->flagstatus = SYNC_FLAGSTATUS_ACTIVE;
-                    //flagtype: for follow up
-                    $output->flag->flagtype = "FollowUp";
-                }
-                else {
-                    $output->flag->flagstatus = SYNC_FLAGSTATUS_CLEAR;
-                }
-
-                if (Request::GetProtocolVersion() >= 14.0) {
-
-                    //flagstatus 0: unknown, 1: replied, 2: replied-to-all, 3: forwarded
-                    if (isset($stat["answered"]) && $stat["answered"]) {
-                        $output->lastverbexecuted = SYNC_MAIL_LASTVERB_REPLYSENDER;
-                    }
-                    elseif (isset($stat["forwarded"]) && $stat["forwarded"]) {
-                        $output->lastverbexecuted = SYNC_MAIL_LASTVERB_FORWARD;
-                    }
-                    else {
-                        $output->lastverbexecuted = SYNC_MAIL_LASTVERB_UNKNOWN;
-                    }
-                }
-            }
-
-            $Mail_RFC822 = new Mail_RFC822();
-            $toaddr = $ccaddr = $replytoaddr = array();
-            if(isset($message->headers["to"]))
-                $toaddr = $Mail_RFC822->parseAddressList($message->headers["to"], null, null, false, null);
-            if(isset($message->headers["cc"]))
-                $ccaddr = $Mail_RFC822->parseAddressList($message->headers["cc"], null, null, false, null);
-            if(isset($message->headers["reply-to"]))
-                $replytoaddr = $Mail_RFC822->parseAddressList($message->headers["reply-to"], null, null, false, null);
-
-            $output->to = array();
-            $output->cc = array();
-            $output->reply_to = array();
-            foreach(array("to" => $toaddr, "cc" => $ccaddr, "reply_to" => $replytoaddr) as $type => $addrlist) {
-                if ($addrlist === false) {
-                    //If we couldn't parse the addresslist we put the raw header (decoded)
-                    if ($type == "reply_to") {
-                        array_push($output->$type, $message->headers["reply-to"]);
-                    }
-                    else {
-                        array_push($output->$type, $message->headers[$type]);
-                    }
-                }
-                else {
-                    foreach($addrlist as $addr) {
-                        // If the address was a group we have "groupname" and "addresses" atributes
-                        if (isset($addr->addresses)) {
-                            if (count($addr->addresses) == 0) {
-                                // readd the empty group delimiter
-                                array_push($output->$type, sprintf("%s:;", $addr->groupname));
-                                if (!isset($output->displayto) && strlen($addr->groupname) > 0) {
-                                    $output->displayto = $addr->groupname;
-                                }
-                            }
-                            else {
-                                foreach($addr->addresses as $addr_group) {
-                                    $name = $this->add_address_to_list($output->$type, $addr_group);
-                                    if (!isset($output->displayto) && strlen($name) > 0) {
-                                        $output->displayto = $name;
-                                    }
-                                }
-                            }
+                        //flagstatus 0: unknown, 1: replied, 2: replied-to-all, 3: forwarded
+                        if (isset($stat["answered"]) && $stat["answered"]) {
+                            $output->lastverbexecuted = SYNC_MAIL_LASTVERB_REPLYSENDER;
+                        }
+                        elseif (isset($stat["forwarded"]) && $stat["forwarded"]) {
+                            $output->lastverbexecuted = SYNC_MAIL_LASTVERB_FORWARD;
                         }
                         else {
-                            // Not a group
-                            $name = $this->add_address_to_list($output->$type, $addr);
-                            if (!isset($output->displayto) && strlen($name) > 0) {
-                                $output->displayto = $name;
-                            }
+                            $output->lastverbexecuted = SYNC_MAIL_LASTVERB_UNKNOWN;
                         }
                     }
                 }
-            }
 
-            // convert mime-importance to AS-importance using RFC4021, X-Priority or default to "normal" (ZP-320)
-            //AS: 0 - low, 1 - normal, 2 - important
-            if (isset($message->headers["importance"])) {
-                //Importance: high, normal, low
-                $mimeImportance = strtolower($message->headers["importance"]);
-                if ($mimeImportance == "normal") {
-                    $output->importance = 1;
-                }
-                elseif ($mimeImportance == "high") {
-                    $output->importance = 2;
-                }
-                elseif ($mimeImportance == "low") {
-                    $output->importance = 0;
-                }
-            }
-            elseif (isset($message->headers["x-priority"])) {
-                //X-Priority: 1 - highest, 2 - high, 3 - normal, 4 - low, 5 - lowest
-                $mimeImportance = preg_replace("/\D+/", "", $message->headers["x-priority"]);
-                if ($mimeImportance == 3) {
-                    $output->importance = 1;
-                }
-                elseif ($mimeImportance < 3) {
-                    $output->importance = 2;
-                }
-                elseif ($mimeImportance > 3) {
-                    $output->importance = 0;
-                }
-            }
-            else {
-                $output->importance = 1;
-            }
+                $Mail_RFC822 = new Mail_RFC822();
+                $toaddr = $ccaddr = $replytoaddr = array();
+                if(isset($message->headers["to"]))
+                    $toaddr = $Mail_RFC822->parseAddressList($message->headers["to"], null, null, false, null);
+                if(isset($message->headers["cc"]))
+                    $ccaddr = $Mail_RFC822->parseAddressList($message->headers["cc"], null, null, false, null);
+                if(isset($message->headers["reply-to"]))
+                    $replytoaddr = $Mail_RFC822->parseAddressList($message->headers["reply-to"], null, null, false, null);
 
-            // Attachments are also needed for MIME messages
-            if(isset($message->parts)) {
-                $mparts = $message->parts;
-                for ($i=0; $i < count($mparts); $i++) {
-                    $part = $mparts[$i];
-
-                    //recursively add subparts to later processing
-                    if ((isset($part->ctype_primary) && $part->ctype_primary == "multipart") && (isset($part->ctype_secondary) && ($part->ctype_secondary == "mixed" || $part->ctype_secondary == "alternative"  || $part->ctype_secondary == "related"))) {
-                        if (isset($part->parts)) {
-                            foreach($part->parts as $spart)
-                                $mparts[] = $spart;
+                $output->to = array();
+                $output->cc = array();
+                $output->reply_to = array();
+                foreach(array("to" => $toaddr, "cc" => $ccaddr, "reply_to" => $replytoaddr) as $type => $addrlist) {
+                    if ($addrlist === false) {
+                        //If we couldn't parse the addresslist we put the raw header (decoded)
+                        if ($type == "reply_to") {
+                            array_push($output->$type, $message->headers["reply-to"]);
                         }
-                        // Go to the for again
-                        continue;
-                    }
-
-                    if (is_calendar($part)) {
-                        ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): text/calendar part found, trying to convert"));
-                        $output->meetingrequest = new SyncMeetingRequest();
-                        parse_meeting_calendar($part, $output, $is_sent_folder);
+                        else {
+                            array_push($output->$type, $message->headers[$type]);
+                        }
                     }
                     else {
-                        //add part as attachment if it's disposition indicates so or if it is not a text part
-                        if ((isset($part->disposition) && ($part->disposition == "attachment" || $part->disposition == "inline")) ||
-                            (isset($part->ctype_primary) && $part->ctype_primary != "text")) {
-
-                            if (isset($part->d_parameters['filename']))
-                                $attname = $part->d_parameters['filename'];
-                            else if (isset($part->ctype_parameters['name']))
-                                $attname = $part->ctype_parameters['name'];
-                            else if (isset($part->headers['content-description']))
-                                $attname = $part->headers['content-description'];
-                            else $attname = "unknown attachment";
-
-                            /* BEGIN fmbiete's contribution r1528, ZP-320 */
-                            if (Request::GetProtocolVersion() >= 12.0) {
-                                if (!isset($output->asattachments) || !is_array($output->asattachments))
-                                    $output->asattachments = array();
-
-                                $attachment = new SyncBaseAttachment();
-
-                                $attachment->estimatedDataSize = isset($part->d_parameters['size']) ? $part->d_parameters['size'] : (isset($part->body) ? strlen($part->body) : 0);
-
-                                $attachment->displayname = $attname;
-                                $attachment->filereference = $folderid . ":" . $id . ":" . $i;
-                                $attachment->method = 1; //Normal attachment
-                                $attachment->contentid = isset($part->headers['content-id']) ? str_replace("<", "", str_replace(">", "", $part->headers['content-id'])) : "";
-                                if (isset($part->disposition) && $part->disposition == "inline") {
-                                    $attachment->isinline = 1;
-                                    // #209 - KD 2015-06-16 If we got a filename use it, otherwise guess
-                                    if (!isset($part->filename)) {
-                                        // We try to fix the name for the inline file.
-                                        // FIXME: This is a dirty hack as the used in the Zarafa backend, if you have a better method let me know!
-                                        if (isset($part->ctype_primary) && isset($part->ctype_secondary)) {
-                                            ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): Guessing extension for inline attachment [primary_type %s secondary_type %s]", $part->ctype_primary, $part->ctype_secondary));
-                                            if (isset(BackendIMAP::$mimeTypes[$part->ctype_primary.'/'.$part->ctype_secondary])) {
-                                                ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): primary_type %s secondary_type %s", $part->ctype_primary, $part->ctype_secondary));
-                                                $attachment->displayname = "inline_".$i.".".BackendIMAP::$mimeTypes[$part->ctype_primary.'/'.$part->ctype_secondary];
-                                            }
-                                            else {
-                                                ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): no extension found in '%s'!!", SYSTEM_MIME_TYPES_MAPPING));
-                                            }
-                                        }
-                                        else {
-                                            ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): no primary_type or secondary_type"));
-                                        }
+                        foreach($addrlist as $addr) {
+                            // If the address was a group we have "groupname" and "addresses" atributes
+                            if (isset($addr->addresses)) {
+                                if (count($addr->addresses) == 0) {
+                                    // readd the empty group delimiter
+                                    array_push($output->$type, sprintf("%s:;", $addr->groupname));
+                                    if (!isset($output->displayto) && strlen($addr->groupname) > 0) {
+                                        $output->displayto = $addr->groupname;
                                     }
                                 }
                                 else {
-                                    $attachment->isinline = 0;
+                                    foreach($addr->addresses as $addr_group) {
+                                        $name = $this->add_address_to_list($output->$type, $addr_group);
+                                        if (!isset($output->displayto) && strlen($name) > 0) {
+                                            $output->displayto = $name;
+                                        }
+                                    }
                                 }
-
-                                array_push($output->asattachments, $attachment);
                             }
-                            else { //ASV_2.5
-                                if (!isset($output->attachments) || !is_array($output->attachments))
-                                    $output->attachments = array();
-
-                                $attachment = new SyncAttachment();
-
-                                $attachment->attsize = isset($part->d_parameters['size']) ? $part->d_parameters['size'] : (isset($part->body) ? strlen($part->body) : 0);
-
-                                $attachment->displayname = $attname;
-                                $attachment->attname = $folderid . ":" . $id . ":" . $i;
-                                $attachment->attmethod = 1;
-                                $attachment->attoid = isset($part->headers['content-id']) ? str_replace("<", "", str_replace(">", "", $part->headers['content-id'])) : "";
-
-                                array_push($output->attachments, $attachment);
+                            else {
+                                // Not a group
+                                $name = $this->add_address_to_list($output->$type, $addr);
+                                if (!isset($output->displayto) && strlen($name) > 0) {
+                                    $output->displayto = $name;
+                                }
                             }
-                            /* END fmbiete's contribution r1528, ZP-320 */
                         }
                     }
                 }
+
+                // convert mime-importance to AS-importance using RFC4021, X-Priority or default to "normal" (ZP-320)
+                //AS: 0 - low, 1 - normal, 2 - important
+                if (isset($message->headers["importance"])) {
+                    //Importance: high, normal, low
+                    $mimeImportance = strtolower($message->headers["importance"]);
+                    if ($mimeImportance == "normal") {
+                        $output->importance = 1;
+                    }
+                    elseif ($mimeImportance == "high") {
+                        $output->importance = 2;
+                    }
+                    elseif ($mimeImportance == "low") {
+                        $output->importance = 0;
+                    }
+                }
+                elseif (isset($message->headers["x-priority"])) {
+                    //X-Priority: 1 - highest, 2 - high, 3 - normal, 4 - low, 5 - lowest
+                    $mimeImportance = preg_replace("/\D+/", "", $message->headers["x-priority"]);
+                    if ($mimeImportance == 3) {
+                        $output->importance = 1;
+                    }
+                    elseif ($mimeImportance < 3) {
+                        $output->importance = 2;
+                    }
+                    elseif ($mimeImportance > 3) {
+                        $output->importance = 0;
+                    }
+                }
+                else {
+                    $output->importance = 1;
+                }
+
+                // Attachments are also needed for MIME messages
+                if(isset($message->parts)) {
+                    $mparts = $message->parts;
+                    for ($i=0; $i < count($mparts); $i++) {
+                        $part = $mparts[$i];
+
+                        //recursively add subparts to later processing
+                        if ((isset($part->ctype_primary) && $part->ctype_primary == "multipart") && (isset($part->ctype_secondary) && ($part->ctype_secondary == "mixed" || $part->ctype_secondary == "alternative"  || $part->ctype_secondary == "related"))) {
+                            if (isset($part->parts)) {
+                                foreach($part->parts as $spart)
+                                    $mparts[] = $spart;
+                            }
+                            // Go to the for again
+                            continue;
+                        }
+
+                        if (is_calendar($part)) {
+                            ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): text/calendar part found, trying to convert"));
+                            $output->meetingrequest = new SyncMeetingRequest();
+                            parse_meeting_calendar($part, $output, $is_sent_folder);
+                        }
+                        else {
+                            //add part as attachment if it's disposition indicates so or if it is not a text part
+                            if ((isset($part->disposition) && ($part->disposition == "attachment" || $part->disposition == "inline")) ||
+                                (isset($part->ctype_primary) && $part->ctype_primary != "text")) {
+
+                                if (isset($part->d_parameters['filename']))
+                                    $attname = $part->d_parameters['filename'];
+                                else if (isset($part->ctype_parameters['name']))
+                                    $attname = $part->ctype_parameters['name'];
+                                else if (isset($part->headers['content-description']))
+                                    $attname = $part->headers['content-description'];
+                                else $attname = "unknown attachment";
+
+                                /* BEGIN fmbiete's contribution r1528, ZP-320 */
+                                if (Request::GetProtocolVersion() >= 12.0) {
+                                    if (!isset($output->asattachments) || !is_array($output->asattachments))
+                                        $output->asattachments = array();
+
+                                    $attachment = new SyncBaseAttachment();
+
+                                    $attachment->estimatedDataSize = isset($part->d_parameters['size']) ? $part->d_parameters['size'] : (isset($part->body) ? strlen($part->body) : 0);
+
+                                    $attachment->displayname = $attname;
+                                    $attachment->filereference = $folderid . ":" . $id . ":" . $i;
+                                    $attachment->method = 1; //Normal attachment
+                                    $attachment->contentid = isset($part->headers['content-id']) ? str_replace("<", "", str_replace(">", "", $part->headers['content-id'])) : "";
+                                    if (isset($part->disposition) && $part->disposition == "inline") {
+                                        $attachment->isinline = 1;
+                                        // #209 - KD 2015-06-16 If we got a filename use it, otherwise guess
+                                        if (!isset($part->filename)) {
+                                            // We try to fix the name for the inline file.
+                                            // FIXME: This is a dirty hack as the used in the Zarafa backend, if you have a better method let me know!
+                                            if (isset($part->ctype_primary) && isset($part->ctype_secondary)) {
+                                                ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): Guessing extension for inline attachment [primary_type %s secondary_type %s]", $part->ctype_primary, $part->ctype_secondary));
+                                                if (isset(BackendIMAP::$mimeTypes[$part->ctype_primary.'/'.$part->ctype_secondary])) {
+                                                    ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): primary_type %s secondary_type %s", $part->ctype_primary, $part->ctype_secondary));
+                                                    $attachment->displayname = "inline_".$i.".".BackendIMAP::$mimeTypes[$part->ctype_primary.'/'.$part->ctype_secondary];
+                                                }
+                                                else {
+                                                    ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): no extension found in '%s'!!", SYSTEM_MIME_TYPES_MAPPING));
+                                                }
+                                            }
+                                            else {
+                                                ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage(): no primary_type or secondary_type"));
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        $attachment->isinline = 0;
+                                    }
+
+                                    array_push($output->asattachments, $attachment);
+                                }
+                                else { //ASV_2.5
+                                    if (!isset($output->attachments) || !is_array($output->attachments))
+                                        $output->attachments = array();
+
+                                    $attachment = new SyncAttachment();
+
+                                    $attachment->attsize = isset($part->d_parameters['size']) ? $part->d_parameters['size'] : (isset($part->body) ? strlen($part->body) : 0);
+
+                                    $attachment->displayname = $attname;
+                                    $attachment->attname = $folderid . ":" . $id . ":" . $i;
+                                    $attachment->attmethod = 1;
+                                    $attachment->attoid = isset($part->headers['content-id']) ? str_replace("<", "", str_replace(">", "", $part->headers['content-id'])) : "";
+
+                                    array_push($output->attachments, $attachment);
+                                }
+                                /* END fmbiete's contribution r1528, ZP-320 */
+                            }
+                        }
+                    }
+                }
+
+                unset($message);
+                unset($mail);
+
+                return $output;
             }
 
-            unset($message);
-            unset($mail);
+            return false;
+        }   catch (Exception $ex) {
 
-            return $output;
-        }
+            ZLog::Write(LOGLEVEL_FATAL, sprintf('Exceptiongetmsg: folder %s msg %s', $folderImapid,$id));
+            ZLog::Write(LOGLEVEL_FATAL, sprintf('Exceptiongetmsg: (%s)  %s', $ex->getMessage(),$ex->getTraceAsString()));
+            throw new Exception("getmsg failed see logs ");
+        }        
 
-        return false;
     }
 
     /**

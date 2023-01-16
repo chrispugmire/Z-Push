@@ -26,6 +26,7 @@ function cleanupDate($receiveddate) {
 }
 function myoverview($host,$port,$user,$pass,$folder,$range,$op)
 {
+    $max_imap_size = 10000000;  // THIS LIMITS THE SIZE OF MESSAGES, WHICH PREVENTS OUT OF MEMORY ISSUE... 
 	$ret = array();
 	$cm = new ClientManager($options = []);
 	$enc = "tls";
@@ -61,7 +62,7 @@ function myoverview($host,$port,$user,$pass,$folder,$range,$op)
 	foreach ($msgs as $m) {
 //echo var_dump($m);
 		$sz = intval($m["RFC822.SIZE"]); // this will fail if the case of responses is wrong... crap. 
-		if ($sz>5000000) {
+		if ($sz>$max_imap_size) {
  	               ZLog::Write(LOGLEVEL_INFO, sprintf("Dropped message too big for php mime %s %s",$folder,$m["UID"]) );
 			continue;
 		}	
