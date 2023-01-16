@@ -1141,7 +1141,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
             $truncsize = Utils::GetTruncSize($contentparameters->GetTruncation());
             $mimesupport = $contentparameters->GetMimeSupport();
             $bodypreference = $contentparameters->GetBodyPreference(); /* fmbiete's contribution r1528, ZP-320 */
-            ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')", $folderid,  $id, implode(",", $bodypreference)));
+            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')", $folderid,  $id, implode(",", $bodypreference)));
 
             $folderImapid = $this->getImapIdFromFolderId($folderid);
 
@@ -1555,6 +1555,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
 
                 unset($message);
                 unset($mail);
+                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s') size=%d", $folderid,  $id, strlen($output));
 
                 return $output;
             }
