@@ -63,7 +63,7 @@ function myoverview($host,$port,$user,$pass,$folder,$range,$op)
 //echo var_dump($m);
 		$sz = intval($m["RFC822.SIZE"]); // this will fail if the case of responses is wrong... crap. 
 		if ($sz>$max_imap_size) {
- 	               ZLog::Write(LOGLEVEL_INFO, sprintf("Dropped message too big for php mime %s %s",$folder,$m["UID"]) );
+ 	               ZLog::Write(LOGLEVEL_DEBUG, sprintf("Dropped message too big for php mime %s %s",$folder,$m["UID"]) );
 			continue;
 		}	
 //echo "size was ",$sz,"\n";

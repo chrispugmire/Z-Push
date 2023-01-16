@@ -1121,6 +1121,8 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
                 $messages[] = $message;
             }
         }
+        ZLog::Write(LOGLEVEL_INFO, sprintf("imap->GetMessageList(): Found '%d' msgs in '%s'", count($messages),$folderid));
+
         return $messages;
     }
 
