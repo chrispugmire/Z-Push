@@ -179,7 +179,9 @@ class FolderSync extends RequestProcessor {
                     $partial = false;
                     while(is_array($exporter->Synchronize())) {
                         $exported++;
-                        ZLog::Write(LOGLEVEL_INFO, sprintf("FOLDERSYNC: Exported %d from %d folders", $exported, $totalChanges));
+                        if ($exported % 10 ) {
+                            ZLog::Write(LOGLEVEL_INFO, sprintf("FOLDERSYNC: Exported %d from %d folders", $exported, $totalChanges));
+                        }
                         if (time() % 4 ) {
                             self::$topCollector->AnnounceInformation(sprintf("Exported %d from %d folders", $exported, $totalChanges));
                         }

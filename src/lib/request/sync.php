@@ -979,7 +979,7 @@ class Sync extends RequestProcessor {
         // final top announcement for a multi-folder sync
         if ($sc->GetCollectionCount() > 1) {
             self::$topCollector->AnnounceInformation($this->getMultiFolderInfoLine($sc->GetCollectionCount()), true);
-            ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync: Processed %d folders", $sc->GetCollectionCount()));
+            ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync: Processed %d folders", $sc->GetCollectionCount()));
         }
 
         // update the waittime waited
@@ -1189,6 +1189,7 @@ class Sync extends RequestProcessor {
         // Stream outgoing changes
         if($status == SYNC_STATUS_SUCCESS && $sc->GetParameter($spa, "getchanges") == true && $windowSize > 0 && !!$exporter) {
             self::$topCollector->AnnounceInformation(sprintf("Streaming data of %d objects", (($changecount > $windowSize)?$windowSize:$changecount)));
+            ZLog::Write(LOGLEVEL_INFO, sprintf("Streaming data of %d objects", (($changecount > $windowSize)?$windowSize:$changecount)));
 
             // Output message changes per folder
             self::$encoder->startTag(SYNC_PERFORM);
