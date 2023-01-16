@@ -1259,6 +1259,8 @@ class Sync extends RequestProcessor {
 
             $this->globallyExportedItems += $n;
 
+            ZLog::Write(LOGLEVEL_INFO, sprintf("Streamed %d objects", $n));
+
             // update folder status, if there is something set
             if ($spa->GetFolderSyncRemaining() && $changecount > 0) {
                 $spa->SetFolderSyncRemaining($changecount);
@@ -1283,6 +1285,8 @@ class Sync extends RequestProcessor {
         }
 
         self::$encoder->endTag();
+
+
 
         // Save the sync state for the next time
         if($spa->HasNewSyncKey()) {

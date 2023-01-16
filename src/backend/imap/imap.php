@@ -57,6 +57,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
     private static $mimeTypes = false;
     private $imapParams = array();
     private $myclient;
+    private $mylast; // last time we opened the connection
 
     private $dontStat = array();            //keys in this array represent mailboxes which can't be stat'd (ie, /NoSELECT status)
     
@@ -1046,11 +1047,15 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
         ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessageList(): searching with sequence '%s'", $sequence));
         // Chrisp efficient overview alternative.
         //$overviews = @imap_fetch_overview($this->mbox, $sequence);
-        if (!isset($myclient)) {
+        if (!isset($myclient) || ((time()-$mylast)>120)) { // if more than 120 seconds, we better reopen the imap connection to be safe. 
             ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Open imap connection", $folderid, $cutoffdate));
             $myclient = myover_open(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,IMAP_OPTIONS);
+            $mylast = time();
+        } else {
+            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Using cached client connection", $folderid, $cutoffdate));
         }
         $overviews = myoverview($myclient,$folderid,$sequence);
+        $mylast = time();
 
         if (!is_array($overviews) || count($overviews) == 0) {
             $error = imap_last_error();
@@ -1146,22 +1151,22 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
             $truncsize = Utils::GetTruncSize($contentparameters->GetTruncation());
             $mimesupport = $contentparameters->GetMimeSupport();
             $bodypreference = $contentparameters->GetBodyPreference(); /* fmbiete's contribution r1528, ZP-320 */
-            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')", $folderid,  $id, implode(",", $bodypreference)));
+//            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')", $folderid,  $id, implode(",", $bodypreference)));
 
             $folderImapid = $this->getImapIdFromFolderId($folderid);
 
             $is_sent_folder = strcasecmp($folderImapid, $this->create_name_folder(IMAP_FOLDER_SENT)) == 0;
 
             // Get flags, etc
-            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')-stat", $folderid,  $id, implode(",", $bodypreference)));
+            //ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')-stat", $folderid,  $id, implode(",", $bodypreference)));
             $stat = $this->StatMessage($folderid, $id);
 
             if ($stat) {
                 $this->imap_reopen_folder($folderImapid);
-                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')-fetch", $folderid,  $id, implode(",", $bodypreference)));
+                //ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')-fetch", $folderid,  $id, implode(",", $bodypreference)));
                 $mail_headers = @imap_fetchheader($this->mbox, $id, FT_UID);
                 $mail =  $mail_headers . @imap_body($this->mbox, $id, FT_PEEK | FT_UID);
-                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')-gotit", $folderid,  $id, implode(",", $bodypreference)));
+                //ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')-gotit", $folderid,  $id, implode(",", $bodypreference)));
 
                 if (empty($mail)) {
                     throw new StatusException(sprintf("BackendIMAP->GetMessage(): Error, message not found, maybe was moved"), SYNC_ITEMOPERATIONSSTATUS_INVALIDATT);
@@ -1563,7 +1568,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
 
                 unset($message);
                 unset($mail);
-                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s') size=%d", $folderid,  $id, strlen($output)));
+                //ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s') size=%d", $folderid,  $id, strlen($output)));
 
                 return $output;
             }
