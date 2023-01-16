@@ -1148,12 +1148,15 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
             $is_sent_folder = strcasecmp($folderImapid, $this->create_name_folder(IMAP_FOLDER_SENT)) == 0;
 
             // Get flags, etc
+            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')-stat", $folderid,  $id, implode(",", $bodypreference)));
             $stat = $this->StatMessage($folderid, $id);
 
             if ($stat) {
                 $this->imap_reopen_folder($folderImapid);
+                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')-fetch", $folderid,  $id, implode(",", $bodypreference)));
                 $mail_headers = @imap_fetchheader($this->mbox, $id, FT_UID);
                 $mail =  $mail_headers . @imap_body($this->mbox, $id, FT_PEEK | FT_UID);
+                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessage('%s', '%s', '%s')-gotit", $folderid,  $id, implode(",", $bodypreference)));
 
                 if (empty($mail)) {
                     throw new StatusException(sprintf("BackendIMAP->GetMessage(): Error, message not found, maybe was moved"), SYNC_ITEMOPERATIONSSTATUS_INVALIDATT);
