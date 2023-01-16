@@ -24,10 +24,9 @@ function cleanupDate($receiveddate) {
 	}
 	return $receivedtime;
 }
-function myoverview($host,$port,$user,$pass,$folder,$range,$op)
+function myover_open($host,$port,$user,$pass,$op)
 {
     $max_imap_size = 10000000;  // THIS LIMITS THE SIZE OF MESSAGES, WHICH PREVENTS OUT OF MEMORY ISSUE... 
-	$ret = array();
 	$cm = new ClientManager($options = []);
 	$enc = "tls";
 	if (str_contains($op,"/notls")) $enc = "false";
@@ -43,30 +42,29 @@ function myoverview($host,$port,$user,$pass,$folder,$range,$op)
 	    'protocol'      => 'imap'
 	]);
 
-// cheat as real function fails with bad return type.
-//	$client->connection->setConnectionTimeout(60);
-//$this->connection->setConnectionTimeout($timeout);
-
 	//Connect to the IMAP Server
 	try {
 		$client->connect();
 	} catch (Exception $e) {
-                ZLog::Write(LOGLEVEL_INFO, sprintf("Unable to scan folder %s %s",$folder,$e->getMessage()));
-		return $ret;
+        ZLog::Write(LOGLEVEL_INFO, sprintf("Unable to OPEN imap %s %s %s %s %s",$host,$port,$op,$user,$e->getMessage()));
+		return NULL;
 	} 
+	return $client;
+}
+function myoverview($client,$folder,$range)
+{
+    $max_imap_size = 10000000;  // THIS LIMITS THE SIZE OF MESSAGES, WHICH PREVENTS OUT OF MEMORY ISSUE... 
+	$ret = array();
 	$client->openFolder($folder,false);
 
-	// NOT USING RANGE YET!! CHANGE TO UID SEARCH...
 	$msgs = $client->connection->fetch(["FLAGS","INTERNALDATE","RFC822.SIZE","UID"],explode(",",$range),null,IMAP::ST_UID); // st_uid == serch based on uid number...
 
 	foreach ($msgs as $m) {
-//echo var_dump($m);
 		$sz = intval($m["RFC822.SIZE"]); // this will fail if the case of responses is wrong... crap. 
 		if ($sz>$max_imap_size) {
  	               ZLog::Write(LOGLEVEL_DEBUG, sprintf("Dropped message too big for php mime %s %s",$folder,$m["UID"]) );
 			continue;
 		}	
-//echo "size was ",$sz,"\n";
 		$x = new MINFO();
 		$x->uid = intval($m["UID"]); 
 		$x->udate = cleanupDate($m["INTERNALDATE"]);

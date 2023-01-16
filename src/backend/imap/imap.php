@@ -56,6 +56,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
     private $excludedFolders;
     private static $mimeTypes = false;
     private $imapParams = array();
+    private $myclient;
 
     private $dontStat = array();            //keys in this array represent mailboxes which can't be stat'd (ie, /NoSELECT status)
     
@@ -1045,7 +1046,8 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
         ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessageList(): searching with sequence '%s'", $sequence));
         // Chrisp efficient overview alternative.
         //$overviews = @imap_fetch_overview($this->mbox, $sequence);
-        $overviews = myoverview(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,$folderid,$sequence,IMAP_OPTIONS);
+        if (is_null($myclient)) $myclient = myover_open(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,IMAP_OPTIONS);
+        $overviews = myoverview($folderid,$sequence);
 
         if (!is_array($overviews) || count($overviews) == 0) {
             $error = imap_last_error();
@@ -1587,8 +1589,9 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
         $folderImapid = $this->getImapIdFromFolderId($folderid);
 
         $this->imap_reopen_folder($folderImapid);
-        //$overview = @imap_fetch_overview($this->mbox, $id, FT_UID);
-        $overview = myoverview(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,$folderImapid,$id,IMAP_OPTIONS);
+        $overview = @imap_fetch_overview($this->mbox, $id, FT_UID);
+        // We don't use the new fast overview code here, because it would require logging in again, not cool! 
+        //$overview = myoverview(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,$folderImapid,$id,IMAP_OPTIONS);
 
         if (!$overview) {
             ZLog::Write(LOGLEVEL_WARN, sprintf("BackendIMAP->StatMessage('%s','%s'): XFailed to retrieve overview: %s", $folderImapid, $id, imap_last_error()));
@@ -1599,8 +1602,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
         if (empty($overview[0]->uid)) return false;
 
         // search for the specific uid and keyword/flag, because imap_fetch_overview() does not return $Forwarded flag
-        // Chrisp efficient overview alternative.
-
+        $forwardedMessages = @imap_search($this->mbox, 'KEYWORD $Forwarded', SE_UID);
 
         $entry = array();
         if (isset($overview[0]->udate)) {
@@ -1628,13 +1630,13 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
             $entry["answered"] = 0;
         }
 
-        if (isset($overview[0]->forwarded) && $overview[0]->forwarded) {
-            $message["forwarded"] = 1;
+        // 'forwarded'
+        if (is_array($forwardedMessages) && in_array($overview[0]->uid, $forwardedMessages)) {
+            $entry["forwarded"] = 1;
         }
         else {
-            $message["forwarded"] = 0;
+            $entry["forwarded"] = 0;
         }
-
 
         // 'flagged' aka 'FollowUp' aka 'starred'
         if (isset($overview[0]->flagged) && $overview[0]->flagged) {
@@ -1644,7 +1646,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
             $entry["star"] = 0;
         }
 
-        return $entry;
+        return $entry;    
     }
 
     /**
