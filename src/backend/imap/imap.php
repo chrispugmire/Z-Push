@@ -1050,7 +1050,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
         if (!is_array($overviews) || count($overviews) == 0) {
             $error = imap_last_error();
             if (strlen($error) > 0 && imap_num_msg($this->mbox) > 0) {
-                ZLog::Write(LOGLEVEL_WARN, sprintf("BackendIMAP->GetMessageList('%s','%s'): Failed to retrieve overview: %s seq=%s", $folderid, $cutoffdate, imap_last_error(),$sequence));
+                ZLog::Write(LOGLEVEL_WARN, sprintf("BackendIMAP->GetMessageList('%s','%s'): YFailed to retrieve overview: %s seq=%s", $folderid, $cutoffdate, imap_last_error(),$sequence));
             }
             return $messages;
         }
@@ -1585,7 +1585,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
         $overview = myoverview(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,$folderImapid,$id,IMAP_OPTIONS);
 
         if (!$overview) {
-            ZLog::Write(LOGLEVEL_WARN, sprintf("BackendIMAP->StatMessage('%s','%s'): Failed to retrieve overview: %s", $folderImapid, $id, imap_last_error()));
+            ZLog::Write(LOGLEVEL_WARN, sprintf("BackendIMAP->StatMessage('%s','%s'): XFailed to retrieve overview: %s", $folderImapid, $id, imap_last_error()));
             return false;
         }
 
