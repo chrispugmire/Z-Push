@@ -1047,7 +1047,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
         // Chrisp efficient overview alternative.
         //$overviews = @imap_fetch_overview($this->mbox, $sequence);
         if (!isset($myclient)) {
-            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Open imap connection", $folderid, $cutoffdate);
+            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Open imap connection", $folderid, $cutoffdate));
             $myclient = myover_open(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,IMAP_OPTIONS);
         }
         $overviews = myoverview($myclient,$folderid,$sequence);
