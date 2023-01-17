@@ -25,7 +25,7 @@
 ************************************************/
 
 class Request {
-    const MAXMEMORYUSAGE = 0.9;     // use max. 90% of allowed memory when synching
+    const MAXMEMORYUSAGE = 0.7;     // use max. 90% of allowed memory when synching, chrisp reduced to 70%, as it needs space to read an entire message into memory.  
     const UNKNOWN = "unknown";
     const IMPERSONATE_DELIM = '#';
 
@@ -716,7 +716,7 @@ class Request {
     /**
      * Indicates if the memory usage limit is almost reached.
      * Processing should stop then to prevent hard out-of-memory issues.
-     * The threshold is hardcoded at 90% in Request::MAXMEMORYUSAGE.
+     * The threshold is hardcoded at 90% in Request::MAXMEMORYUSAGE.  (chrisp changed to 70%)
      *
      * @access public
      * @return boolean

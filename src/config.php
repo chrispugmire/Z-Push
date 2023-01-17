@@ -26,7 +26,11 @@
 /**********************************************************************************
  *  Default settings
  */
-    // Defines the default time zone, change e.g. to "Europe/London" if necessary
+    // chrisp fix the memory limit as z-push is greedy and most configs aren't set right.  This should cope with message of about 20mb.. maybe...
+    // there is also a message size limit, messages over 10mb are ignored, this is in myover.php
+    ini_set("memory_limit","512M"); 
+
+     // Defines the default time zone, change e.g. to "Europe/London" if necessary
     define('TIMEZONE', '');
 
     // Defines the base path on the server
@@ -204,7 +208,8 @@
     // MS Outlook 2013+ request up to 512 items to accelerate the sync process.
     // If you detect high load (also on subsystems) you could try a lower setting.
     // max: 512 - value used if mobile does not limit amount of items
-    define('SYNC_MAX_ITEMS', 512);
+    // chrisp introduced a hard coded 200 limit so this setting is ignored if above that.  
+    define('SYNC_MAX_ITEMS', 200);  
 
     // The devices usually send a list of supported properties for calendar and contact
     // items. If a device does not includes such a supported property in Sync request,
