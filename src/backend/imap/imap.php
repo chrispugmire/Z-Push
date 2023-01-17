@@ -1016,133 +1016,137 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
      */
     public function GetMessageList($folderid, $cutoffdate) {
         ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessageList('%s','%s')", $folderid, $cutoffdate));
+        try {
+            $folderid = $this->getImapIdFromFolderId($folderid);
 
-        $folderid = $this->getImapIdFromFolderId($folderid);
+            if ($folderid == false)
+                throw new StatusException("Folderid not found in cache", SYNC_STATUS_FOLDERHIERARCHYCHANGED);
 
-        if ($folderid == false)
-            throw new StatusException("Folderid not found in cache", SYNC_STATUS_FOLDERHIERARCHYCHANGED);
+            $messages = array();
+            $this->imap_reopen_folder($folderid, true);
 
-        $messages = array();
-        $this->imap_reopen_folder($folderid, true);
+            if ($cutoffdate > 0) {
+                // IMAP SINCE search criteria
+                $searchCriteria = "SINCE ". date("d-M-Y", $cutoffdate);
 
-        if ($cutoffdate > 0) {
-            // IMAP SINCE search criteria
-            $searchCriteria = "SINCE ". date("d-M-Y", $cutoffdate);
+                // search messages in time range
+                $search = @imap_search($this->mbox, $searchCriteria);
+                if ($search === false) {
+                    ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): 0 result for the search or error: %s", $folderid, $cutoffdate, imap_last_error()));
+                    return $messages;
+                }
 
-            // search messages in time range
-            $search = @imap_search($this->mbox, $searchCriteria);
-            if ($search === false) {
-                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): 0 result for the search or error: %s", $folderid, $cutoffdate, imap_last_error()));
+                $sequence = implode(",", $search);
+
+                // search for forwarded messages in time range, because imap_fetch_overview() does not return $Forwarded flag
+                //$forwardedMessages = @imap_search($this->mbox, 'KEYWORD $Forwarded ' . $searchCriteria, SE_UID);
+            }
+            else {
+                $sequence = "1:*";
+
+                // search for forwarded messages
+                //$forwardedMessages = @imap_search($this->mbox, 'KEYWORD $Forwarded', SE_UID);
+            }
+
+            ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessageList(): searching with sequence '%s'", $sequence));
+            // Chrisp efficient overview alternative.
+            //$overviews = @imap_fetch_overview($this->mbox, $sequence);
+            if (isset(self::$mylast)) if ((time()-self::$mylast)>120) {
+                unset(self::$myclient);
+                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Close old unused connection", $folderid, $cutoffdate));
+
+            }
+            if (!isset(self::$myclient)  ) { // if more than 120 seconds, we better reopen the imap connection to be safe. 
+                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Open imap connection2  ", $folderid, $cutoffdate));
+                self::$myclient = myover_open(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,IMAP_OPTIONS);
+                self::$mylast = time();
+            } else {
+                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Using cached client connection", $folderid, $cutoffdate));
+            }
+            $overviews = myoverview(self::$myclient,$folderid,$sequence);
+            self::$mylast = time();
+
+            if (!is_array($overviews) || count($overviews) == 0) {
+                $error = imap_last_error();
+                if (strlen($error) > 0 && imap_num_msg($this->mbox) > 0) {
+                    ZLog::Write(LOGLEVEL_WARN, sprintf("BackendIMAP->GetMessageList('%s','%s'): YFailed to retrieve overview: %s seq=%s", $folderid, $cutoffdate, imap_last_error(),$sequence));
+                }
                 return $messages;
             }
 
-            $sequence = implode(",", $search);
+            foreach ($overviews as $overview) {
+                // Determine the message's date and apply the cutoff; if the overview's ->udate property is
+                // not available, fall back to the "Date:" header as it appears in the email.
+                $date = 0;
+                if (isset($overview->udate)) {
+                    $date = $overview->udate;
+                } else if (isset($overview->date)) {
+                    $date = $this->cleanupDate($overview->date);
+                }
+                if ($date < $cutoffdate) {
+                    // Message is out of range; ignore it
+                    continue;
+                }
 
-            // search for forwarded messages in time range, because imap_fetch_overview() does not return $Forwarded flag
-            //$forwardedMessages = @imap_search($this->mbox, 'KEYWORD $Forwarded ' . $searchCriteria, SE_UID);
-        }
-        else {
-            $sequence = "1:*";
+                // cut of deleted messages
+                if (isset($overview->deleted) && $overview->deleted)
+                    continue;
 
-            // search for forwarded messages
-            //$forwardedMessages = @imap_search($this->mbox, 'KEYWORD $Forwarded', SE_UID);
-        }
+                if (isset($overview->uid)) {
+                    $message = array();
+                    $message["mod"] = $date;
+                    $message["id"] = $overview->uid;
 
-        ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessageList(): searching with sequence '%s'", $sequence));
-        // Chrisp efficient overview alternative.
-        //$overviews = @imap_fetch_overview($this->mbox, $sequence);
-        if (isset(self::$mylast)) if ((time()-self::$mylast)>120) {
-            unset(self::$myclient);
-            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Close old unused connection", $folderid, $cutoffdate));
+                    // 'seen' aka 'read'
+                    if (isset($overview->seen) && $overview->seen) {
+                        $message["flags"] = 1;
+                    }
+                    else {
+                        $message["flags"] = 0;
+                    }
 
-        }
-        if (!isset(self::$myclient)  ) { // if more than 120 seconds, we better reopen the imap connection to be safe. 
-            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Open imap connection2  ", $folderid, $cutoffdate));
-            self::$myclient = myover_open(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,IMAP_OPTIONS);
-            self::$mylast = time();
-        } else {
-            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Using cached client connection", $folderid, $cutoffdate));
-        }
-        $overviews = myoverview(self::$myclient,$folderid,$sequence);
-        self::$mylast = time();
+                    // 'answered'
+                    if (isset($overview->answered) && $overview->answered) {
+                        $message["answered"] = 1;
+                    }
+                    else {
+                        $message["answered"] = 0;
+                    }
 
-        if (!is_array($overviews) || count($overviews) == 0) {
-            $error = imap_last_error();
-            if (strlen($error) > 0 && imap_num_msg($this->mbox) > 0) {
-                ZLog::Write(LOGLEVEL_WARN, sprintf("BackendIMAP->GetMessageList('%s','%s'): YFailed to retrieve overview: %s seq=%s", $folderid, $cutoffdate, imap_last_error(),$sequence));
+                    // 'answered'
+                    if (isset($overview->forwarded) && $overview->forwarded) {
+                        $message["forwarded"] = 1;
+                    }
+                    else {
+                        $message["forwarded"] = 0;
+                    }
+
+    /*
+                    if (is_array($forwardedMessages) && in_array($overview->uid, $forwardedMessages)) {
+                        $message["forwarded"] = 1;
+                    }
+                    else {
+                        $message["forwarded"] = 0;
+                    }
+    */
+                    // 'flagged' aka 'FollowUp' aka 'starred'
+                    if (isset($overview->flagged) && $overview->flagged) {
+                        $message["star"] = 1;
+                    }
+                    else {
+                        $message["star"] = 0;
+                    }
+
+                    $messages[] = $message;
+                }
             }
+            ZLog::Write(LOGLEVEL_INFO, sprintf("imap->GetMessageList(): Found '%d' msgs in '%s'", count($messages),$folderid));
             return $messages;
+        } catch (Exception $e) {
+                ZLog::Write(LOGLEVEL_FATAL, sprintf('getmessagelist: crashed (%s)  %s', $ex->getMessage(),$ex->getTraceAsString()));
+                throw new Exception("getmessagelist failed see logs ");
         }
 
-        foreach ($overviews as $overview) {
-            // Determine the message's date and apply the cutoff; if the overview's ->udate property is
-            // not available, fall back to the "Date:" header as it appears in the email.
-            $date = 0;
-            if (isset($overview->udate)) {
-                $date = $overview->udate;
-            } else if (isset($overview->date)) {
-                $date = $this->cleanupDate($overview->date);
-            }
-            if ($date < $cutoffdate) {
-                // Message is out of range; ignore it
-                continue;
-            }
-
-            // cut of deleted messages
-            if (isset($overview->deleted) && $overview->deleted)
-                continue;
-
-            if (isset($overview->uid)) {
-                $message = array();
-                $message["mod"] = $date;
-                $message["id"] = $overview->uid;
-
-                // 'seen' aka 'read'
-                if (isset($overview->seen) && $overview->seen) {
-                    $message["flags"] = 1;
-                }
-                else {
-                    $message["flags"] = 0;
-                }
-
-                // 'answered'
-                if (isset($overview->answered) && $overview->answered) {
-                    $message["answered"] = 1;
-                }
-                else {
-                    $message["answered"] = 0;
-                }
-
-                // 'answered'
-                if (isset($overview->forwarded) && $overview->forwarded) {
-                    $message["forwarded"] = 1;
-                }
-                else {
-                    $message["forwarded"] = 0;
-                }
-
-/*
-                if (is_array($forwardedMessages) && in_array($overview->uid, $forwardedMessages)) {
-                    $message["forwarded"] = 1;
-                }
-                else {
-                    $message["forwarded"] = 0;
-                }
-*/
-                // 'flagged' aka 'FollowUp' aka 'starred'
-                if (isset($overview->flagged) && $overview->flagged) {
-                    $message["star"] = 1;
-                }
-                else {
-                    $message["star"] = 0;
-                }
-
-                $messages[] = $message;
-            }
-        }
-        ZLog::Write(LOGLEVEL_INFO, sprintf("imap->GetMessageList(): Found '%d' msgs in '%s'", count($messages),$folderid));
-
-        return $messages;
     }
 
     /**
