@@ -56,8 +56,8 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
     private $excludedFolders;
     private static $mimeTypes = false;
     private $imapParams = array();
-    private $myclient;
-    private $mylast; // last time we opened the connection
+    static private $myclient;
+    static private $mylast; // last time we opened the connection
 
     private $dontStat = array();            //keys in this array represent mailboxes which can't be stat'd (ie, /NoSELECT status)
     
