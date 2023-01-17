@@ -56,8 +56,8 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
     private $excludedFolders;
     private static $mimeTypes = false;
     private $imapParams = array();
-    static private $myclient;
-    static private $mylast; // last time we opened the connection
+    static $myclient;
+    static $mylast; // last time we opened the connection
 
     private $dontStat = array();            //keys in this array represent mailboxes which can't be stat'd (ie, /NoSELECT status)
     
@@ -1051,8 +1051,13 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
         ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessageList(): searching with sequence '%s'", $sequence));
         // Chrisp efficient overview alternative.
         //$overviews = @imap_fetch_overview($this->mbox, $sequence);
-        if (!isset($myclient) || ((time()-$mylast)>120) ) { // if more than 120 seconds, we better reopen the imap connection to be safe. 
-            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Open imap connection", $folderid, $cutoffdate));
+        if (isset($mylast) if ((time()-$mylast)>120) {
+            unset($myclient);
+            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Close old unused connection", $folderid, $cutoffdate));
+
+        }
+        if (!isset($myclient)  ) { // if more than 120 seconds, we better reopen the imap connection to be safe. 
+            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Open imap connection2  ", $folderid, $cutoffdate));
             $myclient = myover_open(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,IMAP_OPTIONS);
             $mylast = time();
         } else {
