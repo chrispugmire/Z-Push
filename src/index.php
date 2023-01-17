@@ -47,6 +47,7 @@ include_once(ZPUSH_CONFIG);
         ZPush::CheckConfig();
         Request::Initialize();
         ZLog::Initialize();
+        
 
         ZLog::Write(LOGLEVEL_DEBUG,"-------- Start");
         ZLog::Write(LOGLEVEL_INFO,
