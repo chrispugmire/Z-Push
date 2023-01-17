@@ -1051,7 +1051,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
         ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessageList(): searching with sequence '%s'", $sequence));
         // Chrisp efficient overview alternative.
         //$overviews = @imap_fetch_overview($this->mbox, $sequence);
-        if (isset($mylast) if ((time()-$mylast)>120) {
+        if (isset($mylast)) if ((time()-$mylast)>120) {
             unset($myclient);
             ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Close old unused connection", $folderid, $cutoffdate));
 
