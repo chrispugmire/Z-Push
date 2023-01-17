@@ -129,7 +129,11 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
         /* END fmbiete's contribution r1527, ZP-319 */
 
         // open the IMAP-mailbox
-        $this->mbox = @imap_open($this->server , $username, $password, OP_HALFOPEN, 3, $this->imapParams); // chrisp added retries to 3...
+        $st = time();
+        $this->mbox = @imap_open($this->server , $username, $password, OP_HALFOPEN, 0, $this->imapParams); 
+        if (time()-$st>10) {
+            ZLog::Write(LOGLEVEL_WARN, sprintf("BackendIMAP->Logon(): User '%s' login took %d seconds", $username, time()-$st));
+        }
         $this->mboxFolder = "";
 
         if ($this->mbox) {
