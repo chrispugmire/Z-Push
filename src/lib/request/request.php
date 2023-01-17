@@ -25,7 +25,7 @@
 ************************************************/
 
 class Request {
-    const MAXMEMORYUSAGE = 0.7;     // use max. 90% of allowed memory when synching, chrisp reduced to 70%, as it needs space to read an entire message into memory.  
+    const MAXMEMORYUSAGE = 0.9;  
     const UNKNOWN = "unknown";
     const IMPERSONATE_DELIM = '#';
 
@@ -206,9 +206,16 @@ class Request {
             preg_replace_callback('/(\-?\d+)(.?)/',
                     function ($m) {
                         self::$memoryLimit = $m[1] * pow(1024, strpos('BKMG', $m[2])) * self::MAXMEMORYUSAGE;
+                        self::$memoryLimit -= MAX_MSG_SIZE*1000000*3; // Always keep this much free space... so we can read in a message.
                     },
                     strtoupper($memoryLimit));
         }
+    }
+    static public function log_inputs()
+    {
+        ZLog::Write(LOGLEVEL_INFO, sprintf("Request:command: '%s'",$command));
+        ZLog::Write(LOGLEVEL_INFO, sprintf("Request:collectionID '%s'",$collectionId));
+        ZLog::Write(LOGLEVEL_INFO, sprintf("Request:itemId '%s'",$itemId));
     }
 
     /**
@@ -685,14 +692,16 @@ class Request {
         // The amount of time returned is somehow lower than the max timeout so we have
         // time for processing.
 
+        // chrisp reduced as the long timeouts are unresponsive so best to respond sooner with less message.
+
         if (!isset(self::$expectedConnectionTimeout)) {
             // Apple and Windows Phone have higher timeouts (4min = 240sec)
             if (stripos(SYNC_TIMEOUT_LONG_DEVICETYPES, self::GetDeviceType()) !== false) {
-                self::$expectedConnectionTimeout = 210;
+                self::$expectedConnectionTimeout = 60;  // chrisp reduced from 210, we don't want to ever take more than 60 seconds.
             }
             // Samsung devices have a intermediate timeout (90sec)
             else if (stripos(SYNC_TIMEOUT_MEDIUM_DEVICETYPES, self::GetDeviceType()) !== false) {
-                self::$expectedConnectionTimeout = 85;
+                self::$expectedConnectionTimeout = 60; // chrisp reduced from 85.
             }
             else {
                 // for all other devices, a timeout of 30 seconds is expected

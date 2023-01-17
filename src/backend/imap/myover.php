@@ -53,7 +53,7 @@ function myover_open($host,$port,$user,$pass,$op)
 }
 function myoverview($client,$folder,$range)
 {
-    $max_imap_size = 10000000;  // THIS LIMITS THE SIZE OF MESSAGES, WHICH PREVENTS OUT OF MEMORY ISSUE... 
+    $max_imap_size = MAX_MSG_SIZE;  // THIS LIMITS THE SIZE OF MESSAGES, WHICH PREVENTS OUT OF MEMORY ISSUE... 
 	$ret = array();
 	$client->openFolder($folder,false);
 

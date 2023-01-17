@@ -26,9 +26,13 @@
 /**********************************************************************************
  *  Default settings
  */
-    // chrisp fix the memory limit as z-push is greedy and most configs aren't set right.  This should cope with message of about 20mb.. maybe...
+    // chrisp fix the memory limit as z-push is nees more than typical so relying on php.ini is wrong.
     // there is also a message size limit, messages over 10mb are ignored, this is in myover.php
-    ini_set("memory_limit","512M"); 
+    ini_set("memory_limit","256M"); 
+
+    // chrisp added msg size limit, needed to make imap fetching reliable. and ensure we always have enough memory spare.
+    define('MAX_MSG_SIZE',20); //  Units=MB
+
 
      // Defines the default time zone, change e.g. to "Europe/London" if necessary
     define('TIMEZONE', '');
@@ -210,6 +214,7 @@
     // max: 512 - value used if mobile does not limit amount of items
     // chrisp introduced a hard coded 200 limit so this setting is ignored if above that.  
     define('SYNC_MAX_ITEMS', 200);  
+
 
     // The devices usually send a list of supported properties for calendar and contact
     // items. If a device does not includes such a supported property in Sync request,
