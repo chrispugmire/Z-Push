@@ -1064,7 +1064,6 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
                 ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Using cached client connection3", $folderid, $cutoffdate));
             }
             $overviews = myoverview(self::$myclient,$folderid,$sequence);
-            ZLog::Write(LOGLEVEL_INFO, sprintf("imap->GetMessageList(): Foundov '%d' msgs in '%s'", count($overviews),$folderid));
 
             self::$mylast = time();
 
@@ -1072,6 +1071,8 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
                 $error = imap_last_error();
                 if (strlen($error) > 0 && imap_num_msg($this->mbox) > 0) {
                     ZLog::Write(LOGLEVEL_WARN, sprintf("BackendIMAP->GetMessageList('%s','%s'): YFailed to retrieve overview: %s seq=%s", $folderid, $cutoffdate, imap_last_error(),$sequence));
+                } else {
+                    ZLog::Write(LOGLEVEL_INFO, sprintf("imap->GetMessageList(): Empty folder '%s'", $folderid));
                 }
                 return $messages;
             }

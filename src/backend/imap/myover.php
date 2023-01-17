@@ -53,7 +53,7 @@ function myover_open($host,$port,$user,$pass,$op)
 }
 function myoverview($client,$folder,$range)
 {
-    $max_imap_size = MAX_MSG_SIZE;  // THIS LIMITS THE SIZE OF MESSAGES, WHICH PREVENTS OUT OF MEMORY ISSUE... 
+    $max_imap_size = MAX_MSG_SIZE*1000000;  // THIS LIMITS THE SIZE OF MESSAGES, WHICH PREVENTS OUT OF MEMORY ISSUE... 
 	$ret = array();
 	$client->openFolder($folder,false);
 
@@ -62,7 +62,7 @@ function myoverview($client,$folder,$range)
 	foreach ($msgs as $m) {
 		$sz = intval($m["RFC822.SIZE"]); // this will fail if the case of responses is wrong... crap. 
 		if ($sz>$max_imap_size) {
- 	               ZLog::Write(LOGLEVEL_DEBUG, sprintf("Dropped message too big for php mime %s %s",$folder,$m["UID"]) );
+ 	               ZLog::Write(LOGLEVEL_INFO, sprintf("Dropped message too big for php mime %s %s",$folder,$m["UID"]) );
 			continue;
 		}	
 		$x = new MINFO();
