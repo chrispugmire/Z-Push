@@ -885,6 +885,7 @@ class Sync extends RequestProcessor {
                                 $exporter->Config($sc->GetParameter($spa, "state"));
                                 $exporter->ConfigContentParameters($spa->GetCPO());
                                 $exporter->InitializeExporter($streamimporter);
+                                $exporter->set
 
                                 $changecount = $exporter->GetChangeCount();
                             }

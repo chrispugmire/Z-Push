@@ -91,7 +91,7 @@ class ExportChangesDiff extends DiffState implements IExportChanges{
         }
 
        //  self::$deviceManager->GetBackendIdForFolderId($serverid);
-        $hc = ZPush::GetDeviceManager()->device->GetHierarchyCache();
+        $hc = ZPush::GetDeviceManager()->GetHierarchyCache();
         //$hc = $device->GetHierarchyCache();
         $folder = $hc->GetFolder($this->folderid);
         $name = $folder ? $folder->displayname : "unknown";

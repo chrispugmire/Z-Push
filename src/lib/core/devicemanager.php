@@ -959,7 +959,10 @@ class DeviceManager {
     public function SetHeartbeatStateIntegrity($folderid, $uuid, $counter) {
         return $this->loopdetection->SetSyncStateUsage($folderid, $uuid, $counter);
     }
-
+    public function GetHierarchyCache()
+    {
+        return $this->device->GetHierarchyCache();
+    }
     /**
      * Checks the data integrity of the data in the hierarchy cache and the data of the content data (synchronized folders).
      * If a folder is deleted, the sync states could still be on the server (and being loaded by PING) while
