@@ -1021,7 +1021,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
 
             if ($folderid == false)
                 throw new StatusException("Folderid not found in cache", SYNC_STATUS_FOLDERHIERARCHYCHANGED);
-            ZPush::$last_folder_name = $folderid; // chrisp hack as I can't find any way to look it up everywhere...
+            ZPush::last_folder_name = $folderid; // chrisp hack as I can't find any way to look it up everywhere...
             $messages = array();
             $this->imap_reopen_folder($folderid, true);
 
