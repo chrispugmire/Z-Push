@@ -1330,8 +1330,8 @@ class Sync extends RequestProcessor {
         if ($status == SYNC_STATUS_SUCCESS && empty($actiondata["fetchids"]))
             $sc->SaveCollection($spa);
 
-            if ($moreAvailableSent) ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): Folder wants xmore %s", $spa->GetFolderId());
-            else ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): xmore COMPLETED %s", $spa->GetFolderId());
+            if ($moreAvailableSent) ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): Folder wants xmore %s", $spa->GetFolderId()));
+            else ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): xmore COMPLETED %s", $spa->GetFolderId()));
 
         return $status;
     }
