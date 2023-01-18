@@ -801,7 +801,7 @@ class Sync extends RequestProcessor {
             if ($needupdate) {
                 $skipto = $spa->GetFolderId();
                 $spa->SetFolderNeedUpdate(false); // SO IT DOESN'T LOOP, IT WILL BE RESET IF NEEDED.
-                ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): CHRISP Skipping to folder folderid %s",$skipto);
+                ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): Skipping to folder folderid %s",$skipto));
             }
 
         }
@@ -837,7 +837,7 @@ class Sync extends RequestProcessor {
             //$lastuid = $spa->GetFolderLastUid();
      
 
-            if (strlen($skipto)>0) ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): skipto folder %s skipto was %s ",$folderid,$skipto));
+            if (strlen($skipto)>0) ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): Skip folder %s skipto was %s ",$folderid,$skipto));
             $skipto = "";
 
 
