@@ -820,9 +820,12 @@ class Sync extends RequestProcessor {
 
             $total = $spa->GetFolderSyncTotal();
             $todo = $spa->GetFolderSyncRemaining();
-            $st = self::$deviceManager->GetFolderSyncStatus();
-                        
-            ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): CHRISP Total %d remainding %d folderid %s SSTATUS=%s",$total,$todo,$folderid,var_dump($st)));
+             
+            $needupdate = $spa->GetFolderNeedUpdate();
+            //$lastuid = $spa->GetFolderLastUid();
+     
+
+            ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): CHRISP Total %d remainding %d folderid %s needupdate=%d ",$total,$todo,$folderid,$needupdate));
 
 
             // TODO we could check against $sc->GetChangedFolderIds() on heartbeat so we do not need to configure all exporter again
@@ -1327,6 +1330,8 @@ class Sync extends RequestProcessor {
             else
                 ZLog::Write(LOGLEVEL_ERROR, sprintf("HandleSync(): error saving '%s' - no state information available %d %s", $spa->GetNewSyncKey(),isset($state),$status));
         }
+
+        $spa->SetFolderNeedUpdate($moreAvailableSent);
 
         // save SyncParameters
         if ($status == SYNC_STATUS_SUCCESS && empty($actiondata["fetchids"]))
