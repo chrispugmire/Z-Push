@@ -31,6 +31,6 @@ if (!defined("ZPUSH_VERSION")) {
         define("ZPUSH_VERSION", $branch .'-'. $version);
     }
     else {
-        define("ZPUSH_VERSION", "GIT");
+        define("ZPUSH_VERSION", "2.6.2.CP1.0");
     }
 }

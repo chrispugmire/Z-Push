@@ -792,8 +792,9 @@ class Sync extends RequestProcessor {
             return true;
         }
 
-        // Loop through requested folders
-        foreach($sc as $folderid => $spa) {
+        // *****************************************************************************************************************************************
+        // Loop through requested folders **********************
+        foreach($sc as $folderid => $spa) {  // So for this loop, we want to skip to the current folder if we stopped during the folder...chrisp.
             // get actiondata
             $actiondata = $sc->GetParameter($spa, "actiondata");
 
@@ -815,6 +816,12 @@ class Sync extends RequestProcessor {
             $streamimporter = false;
             $newFolderStat = false;
             $setupExporter = true;
+
+
+            $total = $spa->GetFolderSyncTotal();
+            $todo = $spa->GetFolderSyncRemaining();
+            ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): Total %d remainding %d folderid %s",$total,$todo,$folderid));
+
 
             // TODO we could check against $sc->GetChangedFolderIds() on heartbeat so we do not need to configure all exporter again
             if($status == SYNC_STATUS_SUCCESS && ($sc->GetParameter($spa, "getchanges") || ! $spa->HasSyncKey())) {
@@ -1322,6 +1329,9 @@ class Sync extends RequestProcessor {
         // save SyncParameters
         if ($status == SYNC_STATUS_SUCCESS && empty($actiondata["fetchids"]))
             $sc->SaveCollection($spa);
+
+            if ($moreAvailableSent) ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): Folder wants xmore %s", $spa->GetFolderId());
+            else ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): xmore COMPLETED %s", $spa->GetFolderId());
 
         return $status;
     }
