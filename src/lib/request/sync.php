@@ -794,14 +794,26 @@ class Sync extends RequestProcessor {
 
         // *****************************************************************************************************************************************
         // Loop through requested folders **********************
+        $skipto = "";
         foreach($sc as $folderid => $spa) {  // So for this loop, we want to skip to the current folder if we stopped during the folder...chrisp.
-            // get actiondata
+            if (!$spa->GetFolderId()) continue;
+            $needupdate = $spa->GetFolderNeedUpdate();
+            if ($needupdate) {
+                $skipto = $spa->GetFolderId();
+                $spa->SetFolderNeedUpdate(false); // SO IT DOESN'T LOOP, IT WILL BE RESET IF NEEDED.
+                ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): CHRISP Skipping to folder folderid %s",$skipto);
+            }
+
+        }
+        foreach($sc as $folderid => $spa) {  // So for this loop, we want to skip to the current folder if we stopped during the folder...chrisp.
+                // get actiondata
             $actiondata = $sc->GetParameter($spa, "actiondata");
 
             if ($status == SYNC_STATUS_SUCCESS && (!$spa->GetContentClass() || !$spa->GetFolderId())) {
                 ZLog::Write(LOGLEVEL_ERROR, sprintf("HandleSync(): no content class or folderid found for collection."));
                 continue;
             }
+            if (strlen($skipto)>0) if ($spa->GetFolderId()!=$skipto) continue;
 
             if (! $sc->GetParameter($spa, "requested")) {
                 ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): partial sync for folder class '%s' with id '%s'", $spa->GetContentClass(), $spa->GetFolderId()));
@@ -825,7 +837,8 @@ class Sync extends RequestProcessor {
             //$lastuid = $spa->GetFolderLastUid();
      
 
-            ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): CHRISP Total %d remainding %d folderid %s needupdate=%d ",$total,$todo,$folderid,$needupdate));
+            if (strlen($skipto)>0) ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): skipto folder %s skipto was %s ",$folderid,$skipto));
+            $skipto = "";
 
 
             // TODO we could check against $sc->GetChangedFolderIds() on heartbeat so we do not need to configure all exporter again
