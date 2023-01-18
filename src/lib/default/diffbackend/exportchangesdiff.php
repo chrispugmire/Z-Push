@@ -90,7 +90,14 @@ class ExportChangesDiff extends DiffState implements IExportChanges{
             $this->changes = $this->getDiffTo($folderlist);
         }
 
-        ZLog::Write(LOGLEVEL_INFO, sprintf("ExportChangesDiff->InitializeExporter(): Found '%d' changes for '%s'", count($this->changes), ($this->folderid)?$this->folderid : 'hierarchy' ));
+       //  self::$deviceManager->GetBackendIdForFolderId($serverid);
+        $hc = ZPush::GetDeviceManager()->GetHierarchyChangesWrapper();
+        //$hc = $device->GetHierarchyCache();
+        $folder = $hc->GetFolder($this->folderid);
+        $name = $folder ? $folder->displayname : "unknown";
+
+
+        ZLog::Write(LOGLEVEL_INFO, sprintf("ExportChangesDiff->InitializeExporter(): Found '%d' changes for '%s' %s", count($this->changes), ($this->folderid)?$this->folderid : 'hierarchy' ,$name));
     }
 
     /**

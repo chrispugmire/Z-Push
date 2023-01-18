@@ -53,8 +53,7 @@ include_once(ZPUSH_CONFIG);
         ZLog::Write(LOGLEVEL_INFO,
                 sprintf("cmd='%s' devType='%s' devId='%s' getUser='%s' from='%s' version='%s' method='%s'",
                         Request::GetCommand(), Request::GetDeviceType(), Request::GetDeviceID(), Request::GetGETUser(), Request::GetRemoteAddr(), @constant('ZPUSH_VERSION'), Request::GetMethod() ));
-        // Chrisp extra debugging to understand requests...
-        Request::log_inputs();
+        
 
         // always request the authorization header
         if (! Request::HasAuthenticationInfo() || !Request::GetGETUser())

@@ -211,12 +211,6 @@ class Request {
                     strtoupper($memoryLimit));
         }
     }
-    static public function log_inputs()
-    {
-        if (isset($command)) ZLog::Write(LOGLEVEL_INFO, sprintf("Request:command: '%s'",$command));
-        if (isset($collectionId)) ZLog::Write(LOGLEVEL_INFO, sprintf("Request:collectionID '%s'",$collectionId));
-        if (isset($itemId)) ZLog::Write(LOGLEVEL_INFO, sprintf("Request:itemId '%s'",$itemId));
-    }
 
     /**
      * Reads and processes the request headers
