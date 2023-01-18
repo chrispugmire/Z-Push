@@ -36,6 +36,7 @@ class ZPush {
     const CLASS_DEFAULTTYPE = 3;
     const CLASS_OTHERTYPES = 4;
 
+    public static $last_folder_name="none";
     // AS versions
     const ASV_1 = "1.0";
     const ASV_2 = "2.0";
