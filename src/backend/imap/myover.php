@@ -58,12 +58,16 @@ function myidle($client,$foldername,$stopat)
 	// Return when a message arrives..
 	$folder = $client->getFolderByPath($foldername); // 
 	if (!$folder) goto failed;
-	$folder->idle(function($message){
-		$gotmsg = true;
-		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message %d %s",$message->uid,$message->subject));
-	}, $timeout = $tout, $auto_reconnect = false);
-	ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: finished waiting %d",$gotmsg));
-	return $gotmsg;
+	try {
+		$folder->idle(function($message){
+			$gotmsg = true;
+			ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message %d %s",$message->uid,$message->subject));
+		}, $timeout = $tout, $auto_reconnect = false);
+		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: finished waiting %d",$gotmsg));
+		return $gotmsg;
+	} catch (Exception $ex) {
+		ZLog::Write(LOGLEVEL_ERROR, sprintf("ChangesSync: myidle: crashed %s %s",$ex->getMessage(),$ex->getTraceAsString()));
+	}
 failed:
 	ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: could not find folder by name %s",$foldername));
 	while ($stopat > time()) {
