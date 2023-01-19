@@ -66,7 +66,9 @@ function myidle($client,$foldername,$stopat)
 		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: finished waiting %d",$gotmsg));
 		return $gotmsg;
 	} catch (Exception $ex) {
-		ZLog::Write(LOGLEVEL_ERROR, sprintf("ChangesSync: myidle: crashed %s %s",$ex->getMessage(),$ex->getTraceAsString()));
+		ZLog::Write(LOGLEVEL_ERROR, sprintf("ChangesSync: myidle: crashed1 %s %s",$ex->getMessage(),$ex->getTraceAsString()));
+	} catch (\Throwable $e) { // For PHP 7
+		ZLog::Write(LOGLEVEL_ERROR, sprintf("ChangesSync: myidle: crashed2 %s %s",$e->getMessage(),$e->getTraceAsString()));
 	}
 failed:
 	ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: could not find folder by name %s",$foldername));
