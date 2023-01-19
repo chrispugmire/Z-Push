@@ -56,7 +56,7 @@ function myidle($client,$foldername,$stopat)
 	$gotmsg = false;
 	$tout = $stopat - time();
 	// Return when a message arrives..
-	$folder = $client->getFolderByPath($foldername); // 
+	$folder = $client->getFolder($foldername); // 
 	if (!$folder) goto failed;
 	try {
 		$folder->idle(function($message){
