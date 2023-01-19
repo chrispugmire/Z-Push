@@ -51,6 +51,24 @@ function myover_open($host,$port,$user,$pass,$op)
 	} 
 	return $client;
 }
+function myidle($client,$foldername,$stopat)
+{
+	$gotmsg = false;
+	$tout = $stopat - time();
+	// Return when a message arrives..
+	$folder = $client->getFolderByName($foldername);
+	if (!$folder) goto failed;
+	$folder->idle(function($message){
+		$gotmsg = true;
+		ZLog::Write(LOGLEVEL_INFO, sprintf("myidle: got message %d %s",$message->uid,$message->subject));
+	}, $timeout = $tout, $auto_reconnect = false);
+	return $gotmsg;
+failed:
+	while ($stopat > time()) {
+		sleep(1);
+	}
+	return false;
+}
 function myoverview($client,$folder,$range)
 {
     $max_imap_size = MAX_MSG_SIZE*1000000;  // THIS LIMITS THE SIZE OF MESSAGES, WHICH PREVENTS OUT OF MEMORY ISSUE... 
