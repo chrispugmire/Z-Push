@@ -62,6 +62,7 @@ function myidle($client,$foldername,$stopat)
 		$gotmsg = true;
 		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message %d %s",$message->uid,$message->subject));
 	}, $timeout = $tout, $auto_reconnect = false);
+	ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: finished waiting %d",$gotmsg));
 	return $gotmsg;
 failed:
 	ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: could not find folder by name %s",$foldername));
