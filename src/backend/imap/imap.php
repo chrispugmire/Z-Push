@@ -777,21 +777,21 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
         }
         ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSink: found %d changes", count($notifications)));
         // Close IMAP connection, we will reconnect in the next execution. This will reduce IMAP pressure
-        $this->close_connection();
 
         // Wait to timeout
         if (empty($notifications)) {
             // CHRISP additions to actually check for a message!  
-            if (!isset(self::$myclient)  ) { // if more than 120 seconds, we better reopen the imap connection to be safe. 
-                self::$myclient = myover_open(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,IMAP_OPTIONS);
-                self::$mylast = time();
-            } 
+            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->ChangesSink(): Login so we can use idle"));
+            self::$myclient = myover_open(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,IMAP_OPTIONS);
+            self::$mylast = time();
             $imapid = "INBOX"; // hack
+            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->ChangesSink(): Using IDLE on inbox"));
             if (myidle(self::$myclient,$imapid,$stopat)) {
                 $notifications[] = $this->getFolderIdFromImapId($imapid);                
                 ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->ChangesSink(): Idle found message in inbox %s %s",$this->getFolderIdFromImapId($imapid),$imapid));
             }
         }
+        $this->close_connection();
         ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSink: returning now, found %d changes", count($notifications)));
         // Should sit in loop polling the inbox. or using the idle  command with my new code...
 
