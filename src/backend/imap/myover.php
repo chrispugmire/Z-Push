@@ -54,7 +54,7 @@ function myover_open($host,$port,$user,$pass,$op)
 function raw_idle($client, int $timeout = 300) {
 	$client->setTimeout($timeout);
 	while (true) {
-		$line = $client->getConnection()->nextLine(Response::empty());
+		$line = $client->getConnection()->nextLine();
 		if (($pos = strpos($line, "EXISTS")) !== false) {
 			return TRUE;
 		}
