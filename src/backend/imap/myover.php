@@ -66,7 +66,42 @@ function raw_idle($client,$fname, int $timeout = 300) {
 	}
 	return false;
 }
-function myidle($client,$foldername,$stopat)
+/*
+		if (raw_idle($client,$foldername,$tout))  {
+			$gotmsg = true;
+			ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message "));
+		}
+
+*/
+function myidle($client,$foldername,$tout)
+{
+	$gotmsg = false;
+	// Return when a message arrives..
+	$folder = $client->getFolder($foldername); // 
+	if (!$folder) goto failed;
+	try {
+		$folder->idle(function($message){
+			$gotmsg = true;
+			ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message %d %s",$message->uid,$message->subject));
+		}, $timeout = $tout, $auto_reconnect = false);
+		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: finished waiting %d",$gotmsg));
+		return $gotmsg;
+	} catch (Exception $ex) {
+		ZLog::Write(LOGLEVEL_ERROR, sprintf("ChangesSync: myidle: crashed1 %s %s",$ex->getMessage(),$ex->getTraceAsString()));
+		return false;
+	} catch (\Throwable $e) { // For PHP 7
+		ZLog::Write(LOGLEVEL_ERROR, sprintf("ChangesSync: myidle: crashed2 %s %s",$e->getMessage(),$e->getTraceAsString()));
+		return false;
+	}
+failed:
+	ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: could not find folder by name %s",$foldername));
+	sleep(10); // cludge lol.  
+	return false;
+}
+
+
+
+function myidlenot($client,$foldername,$stopat)
 {
 	$gotmsg = false;
 	$tout = $stopat - time();
@@ -74,7 +109,7 @@ function myidle($client,$foldername,$stopat)
 	$folder = $client->getFolder($foldername); // 
 	if (!$folder) goto failed;
 	try {
-		if (raw_idle($client,$tout))  {
+		if (raw_idle($client,$foldername,$tout))  {
 			$gotmsg = true;
 			ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message "));
 		}

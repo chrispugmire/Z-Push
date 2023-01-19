@@ -786,7 +786,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
             self::$mylast = time();
             $imapid = "INBOX"; // hack
             ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->ChangesSink(): Using IDLE on inbox"));
-            if (myidle(self::$myclient,$imapid,$stopat)) {
+            if (myidle(self::$myclient,$imapid,$timeout)) {
                 $notifications[] = $this->getFolderIdFromImapId($imapid);                
                 ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->ChangesSink(): Idle found message in inbox %s %s",$this->getFolderIdFromImapId($imapid),$imapid));
             }
