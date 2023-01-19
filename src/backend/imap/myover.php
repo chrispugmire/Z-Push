@@ -73,7 +73,7 @@ function raw_idle($client,$fname, int $timeout = 300) {
 		}
 
 */
-function myidle($client,$foldername,$tout)
+function myidle_not($client,$foldername,$tout)
 {
 	$gotmsg = false;
 	// Return when a message arrives..
@@ -101,11 +101,9 @@ failed:
 
 
 
-function myidlenot($client,$foldername,$stopat)
+function myidle($client,$foldername,$tout)
 {
 	$gotmsg = false;
-	$tout = $stopat - time();
-	// Return when a message arrives..
 	$folder = $client->getFolder($foldername); // 
 	if (!$folder) goto failed;
 	try {
