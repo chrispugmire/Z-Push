@@ -783,13 +783,13 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
         if (empty($notifications)) {
             // CHRISP additions to actually check for a message!  
             if (!isset(self::$myclient)  ) { // if more than 120 seconds, we better reopen the imap connection to be safe. 
-                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->IDLE(): Open imap connection"));
                 self::$myclient = myover_open(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,IMAP_OPTIONS);
                 self::$mylast = time();
             } 
             $imapid = "INBOX"; // hack
-            if (myidle(self::$myclient,"INBOX",$stopat)) {
+            if (myidle(self::$myclient,$imapid,$stopat)) {
                 $notifications[] = $this->getFolderIdFromImapId($imapid);                
+                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->ChangesSink(): Idle found message in inbox %s %s",$this->getFolderIdFromImapId($imapid),$imapid));
             }
         }
         ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSink: returning now, found %d changes", count($notifications)));

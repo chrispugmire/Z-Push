@@ -56,14 +56,15 @@ function myidle($client,$foldername,$stopat)
 	$gotmsg = false;
 	$tout = $stopat - time();
 	// Return when a message arrives..
-	$folder = $client->getFolderByName($foldername);
+	$folder = $client->getFolderByPath($foldername); // 
 	if (!$folder) goto failed;
 	$folder->idle(function($message){
 		$gotmsg = true;
-		ZLog::Write(LOGLEVEL_INFO, sprintf("myidle: got message %d %s",$message->uid,$message->subject));
+		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message %d %s",$message->uid,$message->subject));
 	}, $timeout = $tout, $auto_reconnect = false);
 	return $gotmsg;
 failed:
+	ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: could not find folder by name %s",$foldername));
 	while ($stopat > time()) {
 		sleep(1);
 	}
