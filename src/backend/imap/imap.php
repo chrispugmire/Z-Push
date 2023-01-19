@@ -734,6 +734,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
         $flaggedMessages = array();
         $answeredMessages = array();
         $forwardedMessages = array();
+        ZLog::Write(LOGLEVEL_INFO, "BackendIMAP->ChangesSink(): Checking folders for changes");
 
         // only check once to reduce pressure in the IMAP server
         foreach ($this->sinkfolders as $i => $imapid) {
@@ -774,6 +775,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
                 }
             }
         }
+        ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSink: found %d changes", count($notifications)));
         // Close IMAP connection, we will reconnect in the next execution. This will reduce IMAP pressure
         $this->close_connection();
 
@@ -783,6 +785,8 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
                 sleep(1);
             }
         }
+        ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSink: returning now, found %d changes", count($notifications)));
+        // Should sit in loop polling the inbox. or using the idle  command with my new code...
 
         return $notifications;
     }
