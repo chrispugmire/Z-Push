@@ -51,12 +51,16 @@ function myover_open($host,$port,$user,$pass,$op)
 	} 
 	return $client;
 }
-function raw_idle($client, int $timeout = 300) {
+function raw_idle($client,$fname, int $timeout = 300) {
+
+	$client->openFolder($fname, true);
+	$connection = $client->getConnection();
+	$connection->idle();
 	$client->setTimeout($timeout);
 	while (true) {
-		$line = $client->getConnection()->nextLine();
+		$line = $connection->nextLine();
 		if (($pos = strpos($line, "EXISTS")) !== false) {
-			return TRUE;
+			return true;
 		}
 		if (!$client->isConnected()) break;
 	}
