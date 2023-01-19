@@ -51,6 +51,17 @@ function myover_open($host,$port,$user,$pass,$op)
 	} 
 	return $client;
 }
+function raw_idle($client, int $timeout = 300) {
+	$client->setTimeout($timeout);
+	while (true) {
+		$line = $client->getConnection()->nextLine(Response::empty());
+		if (($pos = strpos($line, "EXISTS")) !== false) {
+			return TRUE;
+		}
+		if (!$client->isConnected()) break;
+	}
+	return false;
+}
 function myidle($client,$foldername,$stopat)
 {
 	$gotmsg = false;
@@ -59,11 +70,11 @@ function myidle($client,$foldername,$stopat)
 	$folder = $client->getFolder($foldername); // 
 	if (!$folder) goto failed;
 	try {
-		$folder->idle(function($message){
+		if (raw_idle($client,$tout))  {
 			$gotmsg = true;
-			ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message %d %s",$message->uid,$message->subject));
-		}, $timeout = $tout, $auto_reconnect = false);
-		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: finished waiting %d",$gotmsg));
+			ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message "));
+		}
+		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: finished waiting gotmsg=%d",$gotmsg));
 		return $gotmsg;
 	} catch (Exception $ex) {
 		ZLog::Write(LOGLEVEL_ERROR, sprintf("ChangesSync: myidle: crashed1 %s %s",$ex->getMessage(),$ex->getTraceAsString()));
