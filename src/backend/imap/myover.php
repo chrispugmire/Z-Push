@@ -51,6 +51,18 @@ function myover_open($host,$port,$user,$pass,$op)
 	} 
 	return $client;
 }
+function nextline($c): string {
+	$line = "";
+	while (($next_char = fread($c->stream, 1)) !== false && $next_char !== "\n") {
+		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: READ CHAR %s ",$next_char));
+		$line .= $next_char;
+	}
+	if ($line === "" && $next_char === false) {
+		throw new RuntimeException('empty response');
+	}
+	return $line . "\n";
+}
+
 function raw_idle($client,$fname, int $timeout = 300) {
 
 	$client->openFolder($fname, true);
@@ -59,13 +71,16 @@ function raw_idle($client,$fname, int $timeout = 300) {
 	$response = $connection->write("notag IDLE");
 	$client->setTimeout($timeout);
 	while (true) {
-		$line = $connection->nextLine();
+		//$line = $connection->nextLine();
+		$line = nextline($connection);
 		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: response %s ",$line));
 		if (($pos = strpos($line, "EXISTS")) !== false) {
+			$response = $connection->write("DONE");
 			return true;
 		}
 		if (!$client->isConnected()) break;
 	}
+	$response = $connection->write("DONE");
 	return false;
 }
 /*
