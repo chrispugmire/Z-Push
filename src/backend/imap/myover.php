@@ -211,7 +211,7 @@ function myoverview($client,$folder,$range)
 	$info = $client->checkFolder($folder);
 	if (!$info) return false;
 	$n = intval($info["exists"]);
-	ZLog::Write(LOGLEVEL_INFO, sprintf("myover: msgs in folder %s %d",$folder,n));
+	ZLog::Write(LOGLEVEL_INFO, sprintf("myover: msgs in folder %s %d",$folder,$n,var_dump($info)));
 	if ($n==0) return $ret;
 
 	$msgs = $client->connection->fetch(["FLAGS","INTERNALDATE","RFC822.SIZE","UID"],explode(",",$range),null,IMAP::ST_UID); // st_uid == serch based on uid number...
