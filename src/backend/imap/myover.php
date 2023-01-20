@@ -146,7 +146,12 @@ function myoverview($client,$folder,$range)
 {
     $max_imap_size = MAX_MSG_SIZE*1000000;  // THIS LIMITS THE SIZE OF MESSAGES, WHICH PREVENTS OUT OF MEMORY ISSUE... 
 	$ret = array();
-	$client->openFolder($folder,false);
+//	$client->openFolder($folder,false);
+	$info = $client->checkFolder($folder);
+	if (!$info) return false;
+	$n = intval($info["exists"]);
+	ZLog::Write(LOGLEVEL_INFO, sprintf("myover: msgs in folder %s %d",$foldername,n));
+	if (n==0) return $ret;
 
 	$msgs = $client->connection->fetch(["FLAGS","INTERNALDATE","RFC822.SIZE","UID"],explode(",",$range),null,IMAP::ST_UID); // st_uid == serch based on uid number...
 
