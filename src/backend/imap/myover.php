@@ -56,18 +56,16 @@ function raw_idle($client,$fname, int $timeout = 300) {
 	$client->openFolder($fname, true);
 	$connection = $client->getConnection();
 //	$connection->idle();
-	$response = $connection->sendRequest("IDLE");
+	$response = $connection->write("notag IDLE");
 	$client->setTimeout($timeout);
 	while (true) {
 		$line = $connection->nextLine();
 		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: response %s ",$line));
 		if (($pos = strpos($line, "EXISTS")) !== false) {
-			$connection->done();
 			return true;
 		}
 		if (!$client->isConnected()) break;
 	}
-	$connection->done();
 	return false;
 }
 /*
