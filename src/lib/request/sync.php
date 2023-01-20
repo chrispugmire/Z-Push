@@ -807,6 +807,8 @@ class Sync extends RequestProcessor {
             }
 
         }
+        $inboxdone = false;
+
         foreach($sc as $folderid => $spa) {  // So for this loop, we want to skip to the current folder if we stopped during the folder...chrisp.
                 // get actiondata
             $actiondata = $sc->GetParameter($spa, "actiondata");
@@ -856,6 +858,11 @@ class Sync extends RequestProcessor {
                     ZLog::Write(LOGLEVEL_DEBUG, sprintf("Sync(): no exporter setup for '%s' as request timeout reached, omitting output for collection.", $spa->GetFolderId()));
                     $setupExporter = false;
                 }
+
+                if ($inboxdone) {
+                    ZLog::Write(LOGLEVEL_INFO, sprintf("Sync(): inbox finished so skip all other collections"));
+                    $setupExporter = false;    
+                }                
 
                 // if max memory allocation is reached, stop processing other collections
                 if (Request::IsRequestMemoryLimitReached()) {
@@ -982,7 +989,8 @@ class Sync extends RequestProcessor {
 
             // there is something to send here, sync folder to output
             $this->syncFolder($sc, $spa, $exporter, $changecount, $streamimporter, $status, $newFolderStat);
-
+            $inboxdone = false;
+            if ($spa->GetFolderInboxDone()) $inboxdone = true;
             // reset status for the next folder
             $status = SYNC_STATUS_SUCCESS;
         } // END foreach collection
@@ -1344,10 +1352,16 @@ class Sync extends RequestProcessor {
             if (isset($state) && $status == SYNC_STATUS_SUCCESS)
                 self::$deviceManager->GetStateManager()->SetSyncState($spa->GetNewSyncKey(), $state, $spa->GetFolderId());
             else
-                ZLog::Write(LOGLEVEL_ERROR, sprintf("HandleSync(): error saving '%s' - no state information available %d %s", $spa->GetNewSyncKey(),isset($state),$status));
+            ZLog::Write(LOGLEVEL_ERROR, sprintf("HandleSync(): error saving '%s' - no state information available %d %s", $spa->GetNewSyncKey(),isset($state),$status));
         }
 
         $spa->SetFolderNeedUpdate($moreAvailableSent);
+        $spa->SetFolderInboxDone(false);
+        ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): is this the folder name %s",$spa->GetBackendFolderId()));
+        if (!$moreAvailableSent) if ($spa->GetBackendFolderId()=="INBOX") {
+            ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): SETTING FLAG TO SAY ITS THE INBOX AND WE FINISHED"));
+            $spa->SetFolderInboxDone(true);
+        }
 
         // save SyncParameters
         if ($status == SYNC_STATUS_SUCCESS && empty($actiondata["fetchids"]))

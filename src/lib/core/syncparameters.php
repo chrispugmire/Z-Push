@@ -61,6 +61,7 @@ class SyncParameters extends StateObject {
                                     'movestate' => false,
                                     'needupdate' => false,
                                     'lastuid' => false,
+                                    'inboxdone' => false,
                                 );
 
     /**
