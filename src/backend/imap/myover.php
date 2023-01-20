@@ -47,7 +47,7 @@ function myover_open($host,$port,$user,$pass,$op)
 		$client->connect();
 	} catch (Exception $e) {
         ZLog::Write(LOGLEVEL_INFO, sprintf("Unable to OPEN imap %s %s %s %s %s",$host,$port,$op,$user,$e->getMessage()));
-		return NULL;
+		return false;
 	} 
 	return $client;
 }
