@@ -1067,7 +1067,7 @@ class Sync extends RequestProcessor {
      */
     private function syncFolder($sc, $spa, $exporter, $changecount, $streamimporter, $status, $newFolderStat) {
         $actiondata = $sc->GetParameter($spa, "actiondata");
-
+        $moreAvailableSent = false;
         // send the WBXML start tags (if not happened already)
         $this->sendFolderStartTag();
         self::$encoder->startTag(SYNC_FOLDER);
