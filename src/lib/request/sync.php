@@ -871,7 +871,7 @@ class Sync extends RequestProcessor {
 
                 // force exporter run if there is a saved status
                 if ($setupExporter && self::$deviceManager->HasFolderSyncStatus($spa->GetFolderId())) {
-                    ZLog::Write(LOGLEVEL_DEBUG, sprintf("Sync(): forcing exporter setup for '%s' as a sync status is saved - ignoring backend folder stats", $spa->GetFolderId()));
+                    ZLog::Write(LOGLEVEL_INFO, sprintf("Sync(): forcing exporter setup for '%s' as a sync status is saved - ignoring backend folder stats", $spa->GetFolderId()));
                 }
                 // compare the folder statistics if the backend supports this
                 elseif ($setupExporter && self::$backend->HasFolderStats()) {
@@ -880,6 +880,7 @@ class Sync extends RequestProcessor {
                     if ($newFolderStat !== false && ! $spa->IsExporterRunRequired($newFolderStat, true)) {
                         $changecount = 0;
                         $setupExporter = false;
+                        ZLog::Write(LOGLEVEL_INFO, sprintf("Sync(): isexportrunrequired was true"));
                     }
                 }
 
