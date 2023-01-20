@@ -746,17 +746,23 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
             // get count of recent, unseen and overall messages
             $status = @imap_status($this->mbox, $this->server . $imapid, SA_ALL);
 
-            // get count of flagged messages (ZP-1561)
-            $flaggedMessages = @imap_search($this->mbox, 'FLAGGED');
-            $flaggedMessages = is_array($flaggedMessages) ? count($flaggedMessages) : 0;
+            if ($imapid=="INBOX") {
+                // get count of flagged messages (ZP-1561)
+                $flaggedMessages = @imap_search($this->mbox, 'FLAGGED');
+                $flaggedMessages = is_array($flaggedMessages) ? count($flaggedMessages) : 0;
 
-            // search for answered messages
-            $answeredMessages = @imap_search($this->mbox, 'ANSWERED');
-            $answeredMessages = is_array($answeredMessages) ? count($answeredMessages) : 0;
+                // search for answered messages
+                $answeredMessages = @imap_search($this->mbox, 'ANSWERED');
+                $answeredMessages = is_array($answeredMessages) ? count($answeredMessages) : 0;
 
-            // search for forwarded messages
-            $forwardedMessages = @imap_search($this->mbox, 'KEYWORD $Forwarded');
-            $forwardedMessages = is_array($forwardedMessages) ? count($forwardedMessages) : 0;
+                // search for forwarded messages
+                $forwardedMessages = @imap_search($this->mbox, 'KEYWORD $Forwarded');
+                $forwardedMessages = is_array($forwardedMessages) ? count($forwardedMessages) : 0; 
+            } else { // If it's not the INBOX, then we don't need to really care that some flags changed... chrisp optimization.
+                $flaggedMessages = 0;
+                $answeredMessages = 0;
+                $forwardedMessages = 0; 
+            }
 
             if (!$status) {
                 ZLog::Write(LOGLEVEL_WARN, sprintf("ChangesSink: could not stat folder '%s': %s ", $this->getFolderIdFromImapId($imapid), imap_last_error()));
