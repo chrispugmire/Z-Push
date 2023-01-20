@@ -1357,8 +1357,9 @@ class Sync extends RequestProcessor {
 
         $spa->SetFolderNeedUpdate($moreAvailableSent);
         $spa->SetFolderInboxDone(false);
-        ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): is this the folder name %s",$spa->GetBackendFolderId()));
-        if (!$moreAvailableSent) if ($spa->GetBackendFolderId()=="INBOX") {
+        // chrisp, using global cludge to get foldername from update, this is because there's seemingly no way to get it at this layer...
+        ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): is this the folder name %s",ZPush::$last_folder_name));
+        if (!$moreAvailableSent) if (ZPush::$last_folder_name=="INBOX") {
             ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): SETTING FLAG TO SAY ITS THE INBOX AND WE FINISHED"));
             $spa->SetFolderInboxDone(true);
         }
