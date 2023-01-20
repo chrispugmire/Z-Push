@@ -791,7 +791,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
             self::$myclient = myover_open(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,IMAP_OPTIONS);
             self::$mylast = time();
             $imapid = "INBOX"; // hack
-            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->ChangesSink(): Using IDLE on inbox"));
+            ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->ChangesSink(): Using IDLE on inbox %d",$timeout));
             if (!self::$myclient) {
                 ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->ChangesSink(): Could not login to use IDLE command"));
                 sleep($timeout);
