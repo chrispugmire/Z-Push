@@ -97,7 +97,8 @@ function myidle($client,$foldername,$tout)
 	$folder = $client->getFolder($foldername); // 
 	if (!$folder) goto failed;
 	try {
-		$folder->idle(function($message){
+//		$folder->idle(function($message){
+		xidle($folder,function($message){
 			$gotmsg = true;
 			ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message %d %s",$message->uid,$message->subject));
 		}, $timeout = $tout, $auto_reconnect = false);
@@ -115,6 +116,66 @@ failed:
 	sleep(10); // cludge lol.  
 	return false;
 }
+
+ function xnextLine($me): string {
+	$line = "";
+	while (($next_char = fread($me->stream, 1)) !== false && $next_char !== "\n") {
+		$line .= $next_char;
+	}
+	return $line . "\n";
+}
+
+function xidle($me,callable $callback, int $timeout = 300, bool $auto_reconnect = false) {
+	$me->client->setTimeout($timeout);
+	if (!in_array("IDLE", $me->client->getConnection()->getCapabilities())) {
+		throw new NotSupportedCapabilityException("IMAP server does not support IDLE");
+	}
+	$me->client->openFolder($me->path, true);
+	$connection = $me->client->getConnection();
+	$connection->idle();
+
+	$sequence = ClientManager::get('options.sequence', IMAP::ST_MSGN);
+
+	while (true) {
+		try {
+			// This polymorphic call is fine - Protocol::idle() will throw an exception beforehand
+			$line = xnextLine($connection);
+
+			if (($pos = strpos($line, "EXISTS")) !== false) {
+				$connection->done();
+				$msgn = (int) substr($line, 2, $pos -2);
+
+				$me->client->openFolder($me->path, true);
+				$message = $me->query()->getMessageByMsgn($msgn);
+				$message->setSequence($sequence);
+				$callback($message);
+
+				$event = $me->getEvent("message", "new");
+				$event::dispatch($message);
+				$connection->idle();
+			} elseif (strpos($line, "OK") === false) {
+				$connection->done();
+				$connection->idle();
+			}
+		}catch (Exceptions\RuntimeException $e) {
+			if(strpos($e->getMessage(), "empty response") >= 0 && $connection->connected()) {
+				$connection->done();
+				$connection->idle();
+				continue;
+			}
+			if(strpos($e->getMessage(), "connection closed") === false) {
+				throw $e;
+			}
+
+			$me->client->reconnect();
+			$me->client->openFolder($me->path, true);
+
+			$connection = $me->client->getConnection();
+			$connection->idle();
+		}
+	}
+}
+
 
 
 
