@@ -51,45 +51,7 @@ function myover_open($host,$port,$user,$pass,$op)
 	} 
 	return $client;
 }
-function nextline($c): string {
-	$line = "";
-	while (($next_char = fread($c->stream, 1)) !== false && $next_char !== "\n") {
-		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: READ CHAR %s ",$next_char));
-		$line .= $next_char;
-	}
-	if ($line === "" && $next_char === false) {
-		throw new RuntimeException('empty response');
-	}
-	return $line . "\n";
-}
 
-function raw_idle($client,$fname, int $timeout = 300) {
-
-	$client->openFolder($fname, true);
-	$connection = $client->getConnection();
-//	$connection->idle();
-	$response = $connection->write("notag IDLE");
-	$client->setTimeout($timeout);
-	while (true) {
-		//$line = $connection->nextLine();
-		$line = nextline($connection);
-		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: response %s ",$line));
-		if (($pos = strpos($line, "EXISTS")) !== false) {
-			$response = $connection->write("DONE");
-			return true;
-		}
-		if (!$client->isConnected()) break;
-	}
-	$response = $connection->write("DONE");
-	return false;
-}
-/*
-		if (raw_idle($client,$foldername,$tout))  {
-			$gotmsg = true;
-			ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message "));
-		}
-
-*/
 function myidle($client,$foldername,$tout)
 {
 	$gotmsg = false;
@@ -97,16 +59,15 @@ function myidle($client,$foldername,$tout)
 	$folder = $client->getFolder($foldername); // 
 	if (!$folder) goto failed;
 	try {
-//		$folder->idle(function($message){
-		xidle($folder,function($message){
+		$folder->idle(function($message){
 			$gotmsg = true;
 			ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message %d %s",$message->uid,$message->subject));
 		}, $timeout = $tout, $auto_reconnect = false);
 		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: finished waiting %d",$gotmsg));
 		return $gotmsg;
 	} catch (Exception $ex) {
-		ZLog::Write(LOGLEVEL_ERROR, sprintf("ChangesSync: myidle: crashed1 %s %s",$ex->getMessage(),$ex->getTraceAsString()));
-		return false;
+		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: this also means a msg arrived"));
+		return true;
 	} catch (\Throwable $e) { // For PHP 7
 		ZLog::Write(LOGLEVEL_ERROR, sprintf("ChangesSync: myidle: crashed2 %s %s",$e->getMessage(),$e->getTraceAsString()));
 		return false;
@@ -117,92 +78,6 @@ failed:
 	return false;
 }
 
- function xnextLine($me): string {
-	$line = "";
-	while (($next_char = fread($me->stream, 1)) !== false && $next_char !== "\n") {
-		$line .= $next_char;
-	}
-	return $line . "\n";
-}
-
-function xidle($me,callable $callback, int $timeout = 300, bool $auto_reconnect = false) {
-	$me->client->setTimeout($timeout);
-	if (!in_array("IDLE", $me->client->getConnection()->getCapabilities())) {
-		throw new NotSupportedCapabilityException("IMAP server does not support IDLE");
-	}
-	$me->client->openFolder($me->path, true);
-	$connection = $me->client->getConnection();
-	$connection->idle();
-
-	$sequence = ClientManager::get('options.sequence', IMAP::ST_MSGN);
-
-	while (true) {
-		try {
-			// This polymorphic call is fine - Protocol::idle() will throw an exception beforehand
-			$line = xnextLine($connection);
-
-			if (($pos = strpos($line, "EXISTS")) !== false) {
-				$connection->done();
-				$msgn = (int) substr($line, 2, $pos -2);
-
-				$me->client->openFolder($me->path, true);
-				$message = $me->query()->getMessageByMsgn($msgn);
-				$message->setSequence($sequence);
-				$callback($message);
-
-				$event = $me->getEvent("message", "new");
-				$event::dispatch($message);
-				$connection->idle();
-			} elseif (strpos($line, "OK") === false) {
-				$connection->done();
-				$connection->idle();
-			}
-		}catch (Exceptions\RuntimeException $e) {
-			if(strpos($e->getMessage(), "empty response") >= 0 && $connection->connected()) {
-				$connection->done();
-				$connection->idle();
-				continue;
-			}
-			if(strpos($e->getMessage(), "connection closed") === false) {
-				throw $e;
-			}
-
-			$me->client->reconnect();
-			$me->client->openFolder($me->path, true);
-
-			$connection = $me->client->getConnection();
-			$connection->idle();
-		}
-	}
-}
-
-
-
-
-function myidle_not($client,$foldername,$tout)
-{
-	$gotmsg = false;
-	$folder = $client->getFolder($foldername); // 
-	if (!$folder) goto failed;
-	try {
-		if (raw_idle($client,$foldername,$tout))  {
-			$gotmsg = true;
-			ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message "));
-		}
-		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: finished waiting gotmsg=%d",$gotmsg));
-		return $gotmsg;
-	} catch (Exception $ex) {
-		ZLog::Write(LOGLEVEL_ERROR, sprintf("ChangesSync: myidle: crashed1 %s %s",$ex->getMessage(),$ex->getTraceAsString()));
-	} catch (\Throwable $e) { // For PHP 7
-		ZLog::Write(LOGLEVEL_ERROR, sprintf("ChangesSync: myidle: crashed2 %s %s",$e->getMessage(),$e->getTraceAsString()));
-	}
-failed:
-	ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: could not find folder by name %s",$foldername));
-	while ($stopat > time()) {
-		sleep(1);
-	}
-	return false;
-}
 function myoverview($client,$folder,$range)
 {
     $max_imap_size = MAX_MSG_SIZE*1000000;  // THIS LIMITS THE SIZE OF MESSAGES, WHICH PREVENTS OUT OF MEMORY ISSUE... 
@@ -211,7 +86,7 @@ function myoverview($client,$folder,$range)
 	$info = $client->checkFolder($folder);
 	if (!$info) return false;
 	$n = intval($info["exists"]);
-	ZLog::Write(LOGLEVEL_INFO, sprintf("myover: msgs in folder %s %d",$folder,$n,var_dump($info)));
+	//ZLog::Write(LOGLEVEL_INFO, sprintf("myover: msgs in folder %s %d",$folder,$n,var_dump($info)));
 	if ($n==0) return $ret;
 
 	$msgs = $client->connection->fetch(["FLAGS","INTERNALDATE","RFC822.SIZE","UID"],explode(",",$range),null,IMAP::ST_UID); // st_uid == serch based on uid number...
