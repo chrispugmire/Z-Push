@@ -10,7 +10,7 @@
         }
       ],
       "require": {
-        "chrispugmire/php-imap": "cp1"
+        "chrispugmire/php-imap": "dev-master"
       }
 
 
