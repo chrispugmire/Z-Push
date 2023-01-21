@@ -1,7 +1,7 @@
 <?php
 require "backend/imap/myover.php";
 
-$client = myover_open("192.168.1.51",143,"test1@small.com","Mytest2","/notls");
+$client = myover_open("192.168.1.50",143,"test1@small.com","Mytest2","/notls");
 
 $ov = myoverview($client,"INBOX","100:110");
 
