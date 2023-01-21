@@ -3,15 +3,6 @@
         "classmap": ["autodiscover/", "backend/", "include/", "lib/"],
         "files": ["version.php", "lib/core/zpushdefs.php", "lib/utils/compat.php"]
     }
-    ,"repositories": [
-        {
-          "type": "vcs",
-          "url": "https://github.com/chrispugmire/php-imap.git"
-        }
-      ],
-      "require": {
-        "chrispugmire/php-imap": "dev-master"
-      }
-
+ 
 
 }
