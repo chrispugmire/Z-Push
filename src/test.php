@@ -6,8 +6,11 @@ $client = myover_open("192.168.1.50",143,"test1@small.com","Mytest2","/notls");
 
 // Idle test...
 if (myidle($client,"INBOX",30)) {
-	echo "myidle returned true";
-} else echo "myidle returned false";
+	echo "myidle returned true\n";
+} else echo "myidle returned false\n";
+
+echo "done\n";
+
 
 /* over view test...
 $ov = myoverview($client,"INBOX","100:110");
