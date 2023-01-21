@@ -66,7 +66,7 @@ function myidle($client,$foldername,$tout)
 	$folder = $client->getFolder($foldername); // 
 	if (!$folder) goto failed;
 	try {
-		if ($folder->idleworks($timeout)) $gotmsg = true;
+		if ($folder->idleworks($tout)) $gotmsg = true;
 		echo (sprintf("ChangesSync: myidle: return %d\n",$gotmsg));
 		return $gotmsg;
 	} catch (Exception $ex) {
