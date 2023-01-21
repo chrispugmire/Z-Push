@@ -63,18 +63,18 @@ function myidle($client,$foldername,$tout)
 	if (!$folder) goto failed;
 	try {
 		if ($folder->idleworks($tout)) $gotmsg = true;
-		echo (sprintf("ChangesSync: myidle: return %d\n",$gotmsg));
+		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: return %d\n",$gotmsg));
 		return $gotmsg;
 	} catch (Exception $ex) {
-		echo (sprintf("ChangesSync: myidle: exception %s\n",$ex.getMessage()));
+		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: exception %s\n",$ex.getMessage()));
 		return false;
 	} catch (\Throwable $e) { // For PHP 7
-		echo (sprintf("ChangesSync: myidle: crashed2 %s %s\n",$e->getMessage(),$e->getTraceAsString()));
+		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: crashed2 %s %s\n",$e->getMessage(),$e->getTraceAsString()));
 		return false;
 	}
 failed:
-	echo sprintf("ChangesSync: myidle: could not find folder by name %s\n",$foldername);
-sleep(10); // cludge lol.  
+	ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: could not find folder by name %s\n",$foldername));
+	sleep(10); // cludge lol.  
 	return false;
 }
 
