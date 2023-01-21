@@ -66,7 +66,31 @@ function myidle($client,$foldername,$tout)
 	$folder = $client->getFolder($foldername); // 
 	if (!$folder) goto failed;
 	try {
-		$folder->idle(function($message){
+		if ($folder->idleworks($timeout)) $gotmsg = true;
+		echo (sprintf("ChangesSync: myidle: return %d\n",$gotmsg));
+		return $gotmsg;
+	} catch (Exception $ex) {
+		echo (sprintf("ChangesSync: myidle: exception %s\n",$ex.getMessage()));
+		return false;
+	} catch (\Throwable $e) { // For PHP 7
+		echo (sprintf("ChangesSync: myidle: crashed2 %s %s\n",$e->getMessage(),$e->getTraceAsString()));
+		return false;
+	}
+failed:
+	echo sprintf("ChangesSync: myidle: could not find folder by name %s\n",$foldername);
+sleep(10); // cludge lol.  
+	return false;
+}
+function myidleDELETE($client,$foldername,$tout)
+{
+	$gotmsg = false;
+	// Return when a message arrives..
+	$folder = $client->getFolder($foldername); // 
+	if (!$folder) goto failed;
+	try {
+		if ($folder->idleworks($timeout)) return true;
+		return false;
+		(function($message){
 			$gotmsg = true;
 //			ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message %d %s",$message->uid,$message->subject));
 			echo (sprintf("ChangesSync: myidle: got message %d %s\n",$message->uid,$message->subject));
