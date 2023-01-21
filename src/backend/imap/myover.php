@@ -2,10 +2,6 @@
 require_once('vendor/autoload.php');
 require_once('php-imap/vendor/autoload.php');
 //require_once('vendor/autoload.php');
-require_once('php-imap/src/ClientManager.php');
-require_once('php-imap/src/Client.php');
-require_once('php-imap/src/Folder.php');
-require_once('php-imap/src/IMAP.php');
 
 use Webklex\PHPIMAP\ClientManager;
 use Webklex\PHPIMAP\Client;
