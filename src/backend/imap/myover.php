@@ -1,5 +1,6 @@
 <?php
-// require_once('vendor/autoload.php');
+require_once('vendor/autoload.php');
+//require_once('vendor/autoload.php');
 require_once('php-imap/src/ClientManager.php');
 require_once('php-imap/src/Client.php');
 require_once('php-imap/src/Folder.php');
