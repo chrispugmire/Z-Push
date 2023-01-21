@@ -68,20 +68,25 @@ function myidle($client,$foldername,$tout)
 	try {
 		$folder->idle(function($message){
 			$gotmsg = true;
-			ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message %d %s",$message->uid,$message->subject));
-		}, $timeout = $tout, $auto_reconnect = false);
-		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: finished waiting %d",$gotmsg));
-		return $gotmsg;
+//			ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: got message %d %s",$message->uid,$message->subject));
+			echo (sprintf("ChangesSync: myidle: got message %d %s\n",$message->uid,$message->subject));
+}, $timeout = $tout, $auto_reconnect = false);
+//		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: finished waiting %d",$gotmsg));
+		echo (sprintf("ChangesSync: myidle: finished waiting %d\n",$gotmsg));
+return $gotmsg;
 	} catch (Exception $ex) {
-		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: this also means a msg arrived"));
-		return true;
+//		ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: this also means a msg arrived"));
+		echo (sprintf("ChangesSync: myidle: this also means a msg arrived\n"));
+return true;
 	} catch (\Throwable $e) { // For PHP 7
-		ZLog::Write(LOGLEVEL_ERROR, sprintf("ChangesSync: myidle: crashed2 %s %s",$e->getMessage(),$e->getTraceAsString()));
-		return false;
+//		ZLog::Write(LOGLEVEL_ERROR, sprintf("ChangesSync: myidle: crashed2 %s %s",$e->getMessage(),$e->getTraceAsString()));
+		echo (sprintf("ChangesSync: myidle: crashed2 %s %s\n",$e->getMessage(),$e->getTraceAsString());
+return false;
 	}
 failed:
-	ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: could not find folder by name %s",$foldername));
-	sleep(10); // cludge lol.  
+//	ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesSync: myidle: could not find folder by name %s",$foldername));
+	echo sprintf("ChangesSync: myidle: could not find folder by name %s\n",$foldername);
+sleep(10); // cludge lol.  
 	return false;
 }
 
