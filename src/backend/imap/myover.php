@@ -80,7 +80,7 @@ return $gotmsg;
 return true;
 	} catch (\Throwable $e) { // For PHP 7
 //		ZLog::Write(LOGLEVEL_ERROR, sprintf("ChangesSync: myidle: crashed2 %s %s",$e->getMessage(),$e->getTraceAsString()));
-		echo (sprintf("ChangesSync: myidle: crashed2 %s %s\n",$e->getMessage(),$e->getTraceAsString());
+		echo (sprintf("ChangesSync: myidle: crashed2 %s %s\n",$e->getMessage(),$e->getTraceAsString()));
 return false;
 	}
 failed:
