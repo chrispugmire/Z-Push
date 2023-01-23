@@ -23,6 +23,20 @@ function cleanupDate($receiveddate) {
 	}
 	return $receivedtime;
 }
+function mytoken($str)
+{
+	$tokens = [];
+	$token = strtok($str,' ()');
+
+	while ($token) {
+		if (substr($token,0,1)=='"') { $token .= ' '.strtok('"').'"'; }
+		if (substr($token,0,1)=="'") { $token .= ' '.strtok("'")."'"; }
+		$tokens[] = $token;
+		$token = strtok(' ()');
+	}
+	return $tokens;
+}
+
 function nextline_timed($c,$tout): string {
 	$line = "";
 	$next_char = "";
@@ -129,7 +143,7 @@ function myoverview($client,$folder,$range)
 	foreach ($msgs as $m) {
 		$x = new MINFO();
 		$inuid = $inflags = $insize = $inudate = false;
-		$words = preg_split("/[ \(\)]/",$m,-1,PREG_SPLIT_NO_EMPTY);
+		$words = mytoken($m);
 		$x->seen = 0;
 		$x->recent = 0;
 		$x->deleted = 0;
