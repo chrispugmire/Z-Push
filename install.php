@@ -1,7 +1,7 @@
 <?php
 recurseCopy("src","/usr/share/z-push","");
 echo "\n";
-echo "Now YOU MUST fix ownerships: e.g.     chown -R www-data /usr/share/z-push";
+
 
 
 function recurseCopy(string $sourceDirectory, string $destinationDirectory): void {
