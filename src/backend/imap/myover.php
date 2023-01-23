@@ -127,9 +127,10 @@ function handmadeimap_fetch_flags($connection, $range)
 
 function myoverview($client,$folder,$range)
 {
-   // $max_imap_size = MAX_MSG_SIZE*1000000;  // THIS LIMITS THE SIZE OF MESSAGES, WHICH PREVENTS OUT OF MEMORY ISSUE... 
-
     $max_imap_size = 10000000;	
+	if (ini_get("MAX_MSG_SIZE")) 
+		$max_imap_size = MAX_MSG_SIZE*1000000;  // THIS LIMITS THE SIZE OF MESSAGES, WHICH PREVENTS OUT OF MEMORY ISSUE... 
+
 	$ret = array();
 	$info = handmadeimap_select($client, $folder);
 

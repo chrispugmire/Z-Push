@@ -212,8 +212,8 @@
     // MS Outlook 2013+ request up to 512 items to accelerate the sync process.
     // If you detect high load (also on subsystems) you could try a lower setting.
     // max: 512 - value used if mobile does not limit amount of items
-    // chrisp introduced a hard coded 200 limit so this setting is ignored if above that.  
-    define('SYNC_MAX_ITEMS', 200);  
+    // 
+    define('SYNC_MAX_ITEMS', 512);  
 
 
     // The devices usually send a list of supported properties for calendar and contact

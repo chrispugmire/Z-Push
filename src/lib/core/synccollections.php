@@ -406,8 +406,8 @@ class SyncCollections implements Iterator {
                 $this->loggedGlobalWindowSizeOverwrite = true;
             }
             $globalWindowSize = SYNC_MAX_ITEMS;
-            if ($globalWindowSize>200) $globalWindowSize = 200; // chrisp hard coded limit to prevent slow responses...
         }
+//        if ($globalWindowSize>400) $globalWindowSize = 400; // chrisp hard coded limit to prevent slow responses...
 
         return $globalWindowSize;
     }
