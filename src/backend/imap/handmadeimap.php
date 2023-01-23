@@ -54,7 +54,7 @@ OF SUCH DAMAGE.
  
  */
 
-require_once("peteutils.php");
+require_once("backend/imap/peteutils.php");
 
 // Each client command requires a unique ID, so that the server can reference it when
 // returning results. I use an incrementing counter to generate the ID
