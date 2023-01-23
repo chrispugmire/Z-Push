@@ -1079,11 +1079,11 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
                 }
             }
             if (!isset(self::$myclient)  ) { // if more than 120 seconds, we better reopen the imap connection to be safe. 
-                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Open imap connection3  ", $folderid, $cutoffdate));
+                ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessageList('%s','%s'): Open imap connection3  ", $folderid, $cutoffdate));
                 self::$myclient = myover_open(IMAP_SERVER,IMAP_PORT,$this->username,$this->password,IMAP_OPTIONS);
                 self::$mylast = time();
             } else {
-                ZLog::Write(LOGLEVEL_INFO, sprintf("BackendIMAP->GetMessageList('%s','%s'): Using cached client connection3", $folderid, $cutoffdate));
+                ZLog::Write(LOGLEVEL_DEBUG, sprintf("BackendIMAP->GetMessageList('%s','%s'): Using cached client connection3", $folderid, $cutoffdate));
             }
             $overviews = myoverview(self::$myclient,$folderid,$sequence);
 
@@ -1165,7 +1165,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
                     $messages[] = $message;
                 }
             }
-            ZLog::Write(LOGLEVEL_INFO, sprintf("imap->GetMessageList(): Found '%d' msgs in '%s'", count($messages),$folderid));
+            ZLog::Write(LOGLEVEL_DEBUG, sprintf("imap->GetMessageList(): Found '%d' msgs in '%s'", count($messages),$folderid));
             return $messages;
         } catch (Exception $e) {
                 ZLog::Write(LOGLEVEL_FATAL, sprintf('getmessagelist: crashed (%s)  %s', $ex->getMessage(),$ex->getTraceAsString()));

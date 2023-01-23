@@ -132,7 +132,7 @@ class Sync extends RequestProcessor {
                         $folderid = self::$deviceManager->GetFolderIdFromCacheByClass($class);
                     }
 
-                    ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync: Requested Folder '%s'", $folderid));
+                    // ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync: Requested Folder '%s'", $folderid));
 
                     // folderid HAS TO BE known by now, so we retrieve the correct SyncParameters object for an update
                     try {
