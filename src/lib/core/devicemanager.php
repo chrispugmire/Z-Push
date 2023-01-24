@@ -796,8 +796,8 @@ class DeviceManager {
     public function ForceFullResync() {
 
         $t = $this->device->GetLastFull(time());
-        if (time()-$t < 300) {
-            ZLog::Write(LOGLEVEL_INFO, "Full device resync IGNORED as we did one recently");
+        if ($t>0) if (time()-$t < 300) {
+            ZLog::Write(LOGLEVEL_INFO, sprintf("Full device resync IGNORED as we did one recently %d",time()-$t));
             return ;
         }
         ZLog::Write(LOGLEVEL_INFO, "Full device resync requested");
