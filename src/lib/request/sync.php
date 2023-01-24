@@ -179,9 +179,11 @@ class Sync extends RequestProcessor {
                             ZLog::Write(LOGLEVEL_DEBUG, sprintf("GetFolderClassFromCacheByID from Device Manager: '%s' for id:'%s'", $spa->GetContentClass(), $spa->GetFolderId()));
                         }
                         catch (NoHierarchyCacheAvailableException $nhca) {
-                            $status = SYNC_STATUS_FOLDERHIERARCHYCHANGED;
-                            self::$deviceManager->ForceFullResync();
-                            ZLog::Write(LOGLEVEL_INFO, sprintf("sync: hascontentclass failed, FullResync requested %s %s",self::$deviceManager->GetBackendIdForFolderId($folderid),$folderid));
+                            ZLog::Write(LOGLEVEL_INFO, sprintf("sync: hascontentclass failed, FullResync requested, but ignored as this loops CHRISP %s %s",self::$deviceManager->GetBackendIdForFolderId($folderid),$folderid));
+                            continue;
+//                            $status = SYNC_STATUS_FOLDERHIERARCHYCHANGED;
+  //                          self::$deviceManager->ForceFullResync();
+    //                        ZLog::Write(LOGLEVEL_INFO, sprintf("sync: hascontentclass failed, FullResync requested %s %s",self::$deviceManager->GetBackendIdForFolderId($folderid),$folderid));
                         }
                     }
 
