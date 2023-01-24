@@ -794,8 +794,15 @@ class DeviceManager {
      * @return boolean
      */
     public function ForceFullResync() {
+
+        $t = $this->device->GetLastFull(time());
+        if (time()-$t < 300) {
+            ZLog::Write(LOGLEVEL_INFO, "Full device resync IGNORED as we did one recently");
+            return ;
+        }
         ZLog::Write(LOGLEVEL_INFO, "Full device resync requested");
 
+        $this->device->SetLastFull(time());
         // delete all other uuids
         foreach ($this->device->GetAllFolderIds() as $folderid)
             $uuid = StateManager::UnLinkState($this->device, $folderid);
