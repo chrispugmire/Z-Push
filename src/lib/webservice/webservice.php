@@ -79,7 +79,7 @@ class Webservice {
 
         $this->server->handle();
 
-        ZLog::Write(LOGLEVEL_DEBUG, sprintf("Webservice::HandleWebservice('%s'): sucessfully sent %d bytes", $commandCode, ob_get_length()));
+        ZLog::Write(LOGLEVEL_INFO, sprintf("Webservice::HandleWebservice('%s'): sucessfully sent %d bytes", $commandCode, ob_get_length()));
         return true;
     }
 }

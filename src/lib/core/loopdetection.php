@@ -303,9 +303,8 @@ class LoopDetection extends InterProcessData {
         }
 
         if ($seenFolderSync && !empty($filtered)) {
-            ZLog::Write(LOGLEVEL_INFO, "LoopDetection->ProcessLoopDetectionIsHierarchyResyncRequired(): Potential loop detected. Full hierarchysync indicated. CHRISP IGNORE");
-            return false;
-//            return true;
+            ZLog::Write(LOGLEVEL_INFO, "LoopDetection->ProcessLoopDetectionIsHierarchyResyncRequired(): Potential loop detected. Full hierarchysync indicated. ");
+            return true;
         }
 
         return false;

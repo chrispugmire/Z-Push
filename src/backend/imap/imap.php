@@ -1168,7 +1168,7 @@ class BackendIMAP extends BackendDiff implements ISearchProvider {
             ZLog::Write(LOGLEVEL_DEBUG, sprintf("imap->GetMessageList(): Found '%d' msgs in '%s'", count($messages),$folderid));
             return $messages;
         } catch (Exception $e) {
-                ZLog::Write(LOGLEVEL_FATAL, sprintf('getmessagelist: crashed (%s)  %s', $ex->getMessage(),$ex->getTraceAsString()));
+                ZLog::Write(LOGLEVEL_FATAL, sprintf('getmessagelist: crashed (%s)  %s', $e->getMessage(),$e->getTraceAsString()));
                 throw new Exception("getmessagelist failed see logs ");
         }
 

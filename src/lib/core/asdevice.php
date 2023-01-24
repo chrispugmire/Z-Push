@@ -61,7 +61,6 @@ class ASDevice extends StateObject {
                                     'koecapabilities' => array(),
                                     'koelastaccess' => false,
                                     'syncfiltertype' => false,
-                                    'lastfull' => 0,
                                 );
 
     static private $loadedData;
