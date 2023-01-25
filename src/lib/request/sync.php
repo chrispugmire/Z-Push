@@ -1285,7 +1285,7 @@ class Sync extends RequestProcessor {
 
             // log the request timeout
             if (Request::IsRequestTimeoutReached() || Request::IsRequestMemoryLimitReached()) {
-                ZLog::Write(LOGLEVEL_INFO "HandleSync(): Stopping export as limits of request timeout or available memory are almost reached!");
+                ZLog::Write(LOGLEVEL_INFO, "HandleSync(): Stopping export as limits of request timeout or available memory are almost reached!");
                 // Send a <MoreAvailable/> tag if we reached the request timeout or max memory, there are more changes and a moreavailable was not already send
                 if (!$moreAvailableSent && ($n > $windowSize)) {
                     self::$encoder->startTag(SYNC_MOREAVAILABLE, false, true);
