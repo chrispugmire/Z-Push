@@ -1,10 +1,15 @@
 <?php
+$owner = "www-data";
+mkdir("/var/lib/z-push");
+mkdir("/var/log/z-push");
+mkdir("/usr/share/z-push");
 recurseCopy("src","/usr/share/z-push","");
 echo "\n";
 
 
 
-function recurseCopy(string $sourceDirectory, string $destinationDirectory): void {
+function recurseCopy(string $sourceDirectory, string $destinationDirectory) {
+    global $owner;
     $directory = opendir($sourceDirectory);
     $ncopy = 0;
     if (is_dir($destinationDirectory) === false) {
@@ -27,6 +32,7 @@ function recurseCopy(string $sourceDirectory, string $destinationDirectory): voi
                 }
             }
             if (strpos($file,".php")==false) continue;
+              if (strpos($file,"policies.ini")==false) continue;
             //echo "copy ".$fullsrc." to ".$fulldst."\n";
             $ncopy += 1;
             copy($fullsrc,$fulldst);
@@ -35,5 +41,4 @@ function recurseCopy(string $sourceDirectory, string $destinationDirectory): voi
     echo "Coppied ".$ncopy." files to ".$destinationDirectory."\n";
 
     closedir($directory);
-    return;
 }

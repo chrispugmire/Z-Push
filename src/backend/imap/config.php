@@ -78,7 +78,7 @@ define('IMAP_AUTOSEEN_ON_DELETE', false);
 
 // Since I know you won't configure this, I will raise an error unless you do.
 // When configured set this to true to remove the error
-define('IMAP_FOLDER_CONFIGURED', false);
+define('IMAP_FOLDER_CONFIGURED', true);
 
 // Folder prefix is the common part in your names (3, 4)
 define('IMAP_FOLDER_PREFIX', '');
@@ -90,19 +90,19 @@ define('IMAP_FOLDER_PREFIX_IN_INBOX', false);
 define('IMAP_FOLDER_INBOX', 'INBOX');
 
 // Sent folder name (case doesn't matter)
-define('IMAP_FOLDER_SENT', 'SENT');
+define('IMAP_FOLDER_SENT', 'Sent');
 
 // Draft folder name (case doesn't matter)
-define('IMAP_FOLDER_DRAFT', 'DRAFTS');
+define('IMAP_FOLDER_DRAFT', 'Drafts');
 
 // Trash folder name (case doesn't matter)
-define('IMAP_FOLDER_TRASH', 'TRASH');
+define('IMAP_FOLDER_TRASH', 'Trash');
 
 // Spam folder name (case doesn't matter). Only showed as special by iOS devices
-define('IMAP_FOLDER_SPAM', 'SPAM');
+define('IMAP_FOLDER_SPAM', 'Spam');
 
 // Archive folder name (case doesn't matter). Only showed as special by iOS devices
-define('IMAP_FOLDER_ARCHIVE', 'ARCHIVE');
+define('IMAP_FOLDER_ARCHIVE', 'Archive');
 
 
 

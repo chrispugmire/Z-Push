@@ -1073,7 +1073,7 @@ class Sync extends RequestProcessor {
         $moreAvailableSent = false;
         $n = 0;
 
-        ZLog::Write(LOGLEVEL_INFO, sprintf("SyncFolder starting %d objects",$changecount));
+        if ($changecount>0) ZLog::Write(LOGLEVEL_INFO, sprintf("SyncFolder starting %d objects",$changecount));
 
         // send the WBXML start tags (if not happened already)
         $this->sendFolderStartTag();
@@ -1372,7 +1372,7 @@ class Sync extends RequestProcessor {
         $spa->SetFolderNeedUpdate($moreAvailableSent);
         $spa->SetFolderInboxDone(false);
         // chrisp, using global cludge to get foldername from update, this is because there's seemingly no way to get it at this layer...
-        ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): is this the folder name %s %d %d",ZPush::$last_folder_name,$n,$changecount));
+        //ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): is this the folder name %s %d %d",ZPush::$last_folder_name,$n,$changecount));
         if ($n>0) if (!$moreAvailableSent) if (ZPush::$last_folder_name=="INBOX") {
             ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): SETTING FLAG TO SAY ITS THE INBOX AND WE FINISHED"));
             $spa->SetFolderInboxDone(true);
@@ -1383,7 +1383,7 @@ class Sync extends RequestProcessor {
             $sc->SaveCollection($spa);
 
             if ($moreAvailableSent) ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): Folder wants xmore %s", $spa->GetFolderId()));
-            else ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): xmore COMPLETED %s", $spa->GetFolderId()));
+            //else ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): xmore COMPLETED %s", $spa->GetFolderId()));
 
         return $status;
     }
