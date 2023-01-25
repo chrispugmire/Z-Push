@@ -1216,7 +1216,7 @@ class Sync extends RequestProcessor {
             // limit windowSize to the max available limit of the global window size left
             $globallyAvailable = $sc->GetGlobalWindowSize() - $this->globallyExportedItems;
             if ($changecount > $globallyAvailable && $windowSize > $globallyAvailable) {
-                ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): Limit window size to %d as the global window size limit will be reached", $globallyAvailable));
+                ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): Limit window size to %d as the global window size limit will be reached", $globallyAvailable));
                 $windowSize = $globallyAvailable;
             }
             // send <MoreAvailable/> if there are more changes than fit in the folder windowsize
@@ -1230,8 +1230,8 @@ class Sync extends RequestProcessor {
 
         // Stream outgoing changes
         if($status == SYNC_STATUS_SUCCESS && $sc->GetParameter($spa, "getchanges") == true && $windowSize > 0 && !!$exporter) {
-            self::$topCollector->AnnounceInformation(sprintf("Streaming data of %d objects", (($changecount > $windowSize)?$windowSize:$changecount)));
-            ZLog::Write(LOGLEVEL_INFO, sprintf("Streaming data of %d objects", (($changecount > $windowSize)?$windowSize:$changecount)));
+            self::$topCollector->AnnounceInformation(sprintf("Streaming data of %d objects window=%d", (($changecount > $windowSize)?$windowSize:$changecount),$windowSize));
+            ZLog::Write(LOGLEVEL_INFO, sprintf("Streaming data of %d objects, totalexp=%d", (($changecount > $windowSize)?$windowSize:$changecount),$this->globallyExportedItems));
 
             // Output message changes per folder
             self::$encoder->startTag(SYNC_PERFORM);
