@@ -687,6 +687,7 @@ class LoopDetection extends InterProcessData {
         // if an incoming loop is already detected, do nothing
         if ($maxItems === 0 && $queuedMessages > 0) {
             ZPush::GetTopCollector()->AnnounceInformation("Incoming loop!", true);
+            ZLog::Write(LOGLEVEL_WARN, sprintf("LoopDetection->Detect(): incoming loop"));
             return true;
         }
 
@@ -756,7 +757,7 @@ class LoopDetection extends InterProcessData {
                         if (!isset($current['ignored']) && $counter < $current['maxCount']) {
                             $current['loopcount'] = 1;
                             $loop = true; // continue in loop-resolving
-                            ZLog::Write(LOGLEVEL_DEBUG, "LoopDetection->Detect(): case 1.2.1 detected");
+                            ZLog::Write(LOGLEVEL_WARN, "LoopDetection->Detect(): case 1.2.1 detected");
                         }
                         // case 1.2.2 - if there were any broken items they should be gone, return to normal
                         else {
@@ -786,14 +787,14 @@ class LoopDetection extends InterProcessData {
                         // before entering 1-by-1 loop detection if counter is re-requested
                         if ($maxItems > 40 && !isset($current['windowLimit'])) {
                             // case 3.0) we have just encountered a loop, but with a big window size, lower window first
-                            ZLog::Write(LOGLEVEL_DEBUG, sprintf("LoopDetection->Detect(): case 3.0 detected - big windowsize of %d, lowering before entering loop mode", $maxItems));
+                            ZLog::Write(LOGLEVEL_WARN, sprintf("LoopDetection->Detect(): case 3.0 detected - big windowsize of %d, lowering before entering loop mode", $maxItems));
                             // return suggested new window size
                             $current['windowLimit'] = 25;
                             $loop = $current['windowLimit'];
                         }
                         else {
                             // case 3.1) we have just encountered a loop!
-                            ZLog::Write(LOGLEVEL_DEBUG, "LoopDetection->Detect(): case 3.1 detected - loop detected, init loop mode");
+                            ZLog::Write(LOGLEVEL_WARN, "LoopDetection->Detect(): case 3.1 detected - loop detected, init loop mode");
                             if (isset($current['windowLimit'])) {
                                 $maxItems = $current['windowLimit'];
                                 unset($current['windowLimit']);
@@ -806,7 +807,7 @@ class LoopDetection extends InterProcessData {
                     }
                     else if ($queuedMessages == 0) {
                         // case 3.2) there was a loop before but now the changes are GONE
-                        ZLog::Write(LOGLEVEL_DEBUG, "LoopDetection->Detect(): case 3.2 detected - changes gone - clearing loop data");
+                        ZLog::Write(LOGLEVEL_WARN, "LoopDetection->Detect(): case 3.2 detected - changes gone - clearing loop data");
                         $current['queued'] = 0;
                         unset($current['loopcount']);
                         unset($current['ignored']);
@@ -816,12 +817,12 @@ class LoopDetection extends InterProcessData {
                     }
                     else {
                         // case 3.3) still looping the same message! Increase counter
-                        ZLog::Write(LOGLEVEL_DEBUG, "LoopDetection->Detect(): case 3.3 detected - in loop mode, increase loop counter");
+                        ZLog::Write(LOGLEVEL_WARN, "LoopDetection->Detect(): case 3.3 detected - in loop mode, increase loop counter");
                         $current['loopcount']++;
 
                         // case 3.3.1 - we got our broken item!
                         if ($current['loopcount'] >= 3 && isset($current['potential'])) {
-                            ZLog::Write(LOGLEVEL_DEBUG, sprintf("LoopDetection->Detect(): case 3.3.1 detected - broken item should be next, attempt to ignore it - id '%s'", $current['potential']));
+                            ZLog::Write(LOGLEVEL_WARN, sprintf("LoopDetection->Detect(): case 3.3.1 detected - broken item should be next, attempt to ignore it - id '%s'", $current['potential']));
                             $this->ignore_messageid = $current['potential'];
                         }
                         $current['maxCount'] = $counter + (($maxItems < $queuedMessages) ? $maxItems : $queuedMessages);
@@ -843,6 +844,7 @@ class LoopDetection extends InterProcessData {
 
         if ($loop === true && $this->ignore_messageid == false) {
             ZPush::GetTopCollector()->AnnounceInformation("Loop detection", true);
+            ZLog::Write(LOGLEVEL_WARN, sprintf("LoopDetection->Detect(): some kind of issue"));
         }
 
         return $loop;

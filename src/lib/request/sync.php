@@ -1072,6 +1072,9 @@ class Sync extends RequestProcessor {
         $actiondata = $sc->GetParameter($spa, "actiondata");
         $moreAvailableSent = false;
         $n = 0;
+
+        ZLog::Write(LOGLEVEL_INFO, sprintf("SyncFolder starting %d objects",$changecount));
+
         // send the WBXML start tags (if not happened already)
         $this->sendFolderStartTag();
         self::$encoder->startTag(SYNC_FOLDER);
@@ -1218,7 +1221,7 @@ class Sync extends RequestProcessor {
             }
             // send <MoreAvailable/> if there are more changes than fit in the folder windowsize
             // or there is a move state (another sync should be done afterwards)
-            if($changecount > $windowSize || $spa->GetMoveState() !== false) {
+            if($changecount > $windowSize) { // } || $spa->GetMoveState() !== false) {  chrisp removed as skipping breaks this.
                 self::$encoder->startTag(SYNC_MOREAVAILABLE, false, true);
                 $moreAvailableSent = true;
                 $spa->DelFolderStat();
