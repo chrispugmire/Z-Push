@@ -1270,7 +1270,12 @@ class Sync extends RequestProcessor {
                 }
 
                 if($n >= $windowSize || Request::IsRequestTimeoutReached() || Request::IsRequestMemoryLimitReached()) {
-                    ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): Exported maxItems of messages: %d / %d", $n, $changecount));
+                    ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): Exported maxItems of messages: %d / %d timeout=%d memory=%d", $n, $changecount,Request::IsRequestTimeoutReached(),Request::IsRequestMemoryLimitReached()));
+                    // chrisp addition - so it doesn't stop.
+                    if (!$moreAvailableSent) {
+                        self::$encoder->startTag(SYNC_MOREAVAILABLE, false, true);
+                        $moreAvailableSent = true;
+                    }
                     break;
                 }
             }
