@@ -1216,7 +1216,7 @@ class Sync extends RequestProcessor {
             // limit windowSize to the max available limit of the global window size left
             $globallyAvailable = $sc->GetGlobalWindowSize() - $this->globallyExportedItems;
             if ($changecount > $globallyAvailable && $windowSize > $globallyAvailable) {
-                ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): Limit window size to %d as the global window size limit will be reached", $globallyAvailable));
+                ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): Limit window size to %d as the global window size limit will be reached glob=%d exp=%d ", $globallyAvailable,$sc->GetGlobalWindowSize() , $this->globallyExportedItems));
                 $windowSize = $globallyAvailable;
             }
             // send <MoreAvailable/> if there are more changes than fit in the folder windowsize

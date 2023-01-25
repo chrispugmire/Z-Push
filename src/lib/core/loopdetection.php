@@ -780,6 +780,7 @@ class LoopDetection extends InterProcessData {
 
                 // case 3 - same counter, changes sent before, hanging loop and ignoring
                 else if ($current['count'] == $counter && $current['queued'] > 0) {
+                    ZLog::Write(LOGLEVEL_INFO, sprintf("LoopDetection->Detect(): counter=%d qued=%d loopcount=%d id=%s uuid=%s",$counter,$current['queued'] ,$current['loopcount'],$folderid, $uuid));
 
                     if (!isset($current['loopcount'])) {
                         // ZP-1213 we are potentially synching a lot of data, e.g. OL with 512 WindowSize
