@@ -627,7 +627,7 @@ class Sync extends RequestProcessor {
 
             if (self::$decoder->getElementStartTag(SYNC_WINDOWSIZE)) {
                 $sc->SetGlobalWindowSize(self::$decoder->getElementContent());
-                ZLog::Write(LOGLEVEL_DEBUG, "Sync(): Global WindowSize requested: ". $sc->GetGlobalWindowSize());
+                ZLog::Write(LOGLEVEL_INFO, "Sync(): Global WindowSize requested: ". $sc->GetGlobalWindowSize());
                 if(!self::$decoder->getElementEndTag()) // SYNC_WINDOWSIZE
                     return false;
             }
