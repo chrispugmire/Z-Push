@@ -122,7 +122,7 @@ include_once(ZPUSH_CONFIG);
         $data = ob_get_contents();
         ob_end_clean();
 
-        ZLog::Write(LOGLEVEL_INFO, sprintf("Streaming data to server size=%d", $len));
+        ZLog::Write(LOGLEVEL_INFO, sprintf("Streaming data to server size=%d", $len)); // this figure is wrong...
 
         // log amount of data transferred
         // TODO check $len when streaming more data (e.g. Attachments), as the data will be send chunked

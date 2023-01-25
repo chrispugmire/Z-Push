@@ -1246,6 +1246,7 @@ class Sync extends RequestProcessor {
                 }
                 catch (SyncObjectBrokenException $mbe) {
                     $brokenSO = $mbe->GetSyncObject();
+                    ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): objectbroken "));
                     if (!$brokenSO) {
                         ZLog::Write(LOGLEVEL_ERROR, sprintf("HandleSync(): Catched SyncObjectBrokenException but broken SyncObject not available. This should be fixed in the backend."));
                     }
@@ -1260,6 +1261,7 @@ class Sync extends RequestProcessor {
                 // something really bad happened while exporting changes
                 catch (StatusException $stex) {
                     $status = $stex->getCode();
+                    ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): Exception %s", $status));
                     // during export we found out that the states should be thrown away (ZP-623)
                     if ($status == SYNC_STATUS_INVALIDSYNCKEY) {
                         self::$deviceManager->ForceFolderResync($spa->GetFolderId());
@@ -1268,7 +1270,7 @@ class Sync extends RequestProcessor {
                 }
 
                 if($n >= $windowSize || Request::IsRequestTimeoutReached() || Request::IsRequestMemoryLimitReached()) {
-                    ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): Exported maxItems of messages: %d / %d", $n, $changecount));
+                    ZLog::Write(LOGLEVEL_INFO, sprintf("HandleSync(): Exported maxItems of messages: %d / %d", $n, $changecount));
                     break;
                 }
             }
@@ -1283,7 +1285,7 @@ class Sync extends RequestProcessor {
 
             // log the request timeout
             if (Request::IsRequestTimeoutReached() || Request::IsRequestMemoryLimitReached()) {
-                ZLog::Write(LOGLEVEL_DEBUG, "HandleSync(): Stopping export as limits of request timeout or available memory are almost reached!");
+                ZLog::Write(LOGLEVEL_INFO "HandleSync(): Stopping export as limits of request timeout or available memory are almost reached!");
                 // Send a <MoreAvailable/> tag if we reached the request timeout or max memory, there are more changes and a moreavailable was not already send
                 if (!$moreAvailableSent && ($n > $windowSize)) {
                     self::$encoder->startTag(SYNC_MOREAVAILABLE, false, true);
